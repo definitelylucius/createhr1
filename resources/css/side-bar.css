@@ -1,0 +1,11 @@
+.sidebar-link.active {
+    background-color: #00446b; /* Change to your desired active background color */
+    color: white; /* Change text color if needed */
+    border-radius: 0.5rem; /* Optional: to maintain rounded corners */
+}
+
+
+
+.sidebar-link.active svg {
+    color: #1f2937; /* Ensures icon color matches active link color */
+}
