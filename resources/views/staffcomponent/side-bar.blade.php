@@ -1,93 +1,111 @@
 <div class="h-screen flex">
-    <aside class="w-64 md:w-72 lg:w-80 bg-white border-r border-gray-200 p-4 shadow-lg flex flex-col overflow-y-auto">
+    <!-- Sidebar Container -->
+    <aside class="w-64 bg-white border-r border-gray-200 shadow-lg flex flex-col">
+        <!-- Sidebar Content -->
+        <div class="p-4 flex-1 overflow-y-auto">
+            <!-- Dashboard -->
+            <div class="mb-4">
+                <a href="{{ route('staff.dashboard') }}" class="flex items-center p-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('staff.dashboard') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <i class="fi fi-rr-home text-xl mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
 
-    <!-- Dashboard -->
-    <div class="flex relative my-1 cursor-pointer">
-        <a href="{{ route('staff.dashboard') }}" class="flex relative my-1 w-full">
-            <span class="w-4 rounded-xl absolute -left-2 h-full bg-white"></span>
-            <p class="ml-8 flex items-center w-full p-1 rounded-xl font-semibold text-gray-700 hover:bg-[#003355] hover:text-white transition">
-                <i class="fi fi-rr-home text-2xl"></i>
-                <span class="px-2">Dashboard</span>
-            </p>
-        </a>
-    </div>
+            <!-- Candidates Section -->
+            <div class="mb-4">
+                <div onclick="toggleDropdown('candidatesDropdown')" class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 {{ request()->routeIs('staff.candidates.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <div class="flex items-center">
+                        <i class="fi fi-rr-user-pen text-xl mr-3"></i>
+                        <span>Candidates</span>
+                    </div>
+                    <i class="fi fi-rr-angle-small-down text-sm transition-transform duration-200" id="candidatesArrow"></i>
+                </div>
+                <div id="candidatesDropdown" class="ml-8 mt-1 space-y-1 {{ request()->routeIs('staff.candidates.*') ? 'block' : 'hidden' }}">
+                    <a href="{{ route('staff.candidates.index') }}" class="block p-2 pl-4 rounded-lg transition-colors duration-200 {{ request()->routeIs('staff.candidates.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fi fi-rr-list text-lg mr-2"></i>
+                        All Candidates
+                    </a>
+                </div>
+                
+            </div>
 
-    <!-- My Tasks -->
-    <div class="relative my-1 cursor-pointer">
-        <div onclick="toggleDropdown('myTasksDropdown')" class="flex relative my-1 w-full cursor-pointer">
-            <span class="w-4 rounded-xl absolute -left-2 h-full bg-white"></span>
-            <p class="ml-8 flex items-center w-full p-1 rounded-xl font-semibold text-gray-700 hover:bg-[#003355] hover:text-white transition">
-                <i class="fi fi-rr-list-check text-2xl"></i>
-                <span class="px-2">My Tasks</span>
-            </p>
-        </div>
-        <div id="myTasksDropdown" class="hidden flex-col ml-8 mt-1 space-y-1">
-            <a href="{{ route('staff.tasks.assigned') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Assigned Tasks</a>
-            <a href="{{ route('staff.tasks.pending') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Pending Tasks</a>
-            <a href="{{ route('staff.tasks.completed') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Completed Tasks</a>
-        </div>
-    </div>
+            <!-- Tags Management -->
+            <div class="mb-4">
+                <div onclick="toggleDropdown('tagsDropdown')" class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 {{ request()->routeIs('staff.tags.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <div class="flex items-center">
+                        <i class="fi fi-rr-tags text-xl mr-3"></i>
+                        <span>Tags Management</span>
+                    </div>
+                    <i class="fi fi-rr-angle-small-down text-sm transition-transform duration-200" id="tagsArrow"></i>
+                </div>
+                <div id="tagsDropdown" class="ml-8 mt-1 space-y-1 {{ request()->routeIs('staff.tags.*') ? 'block' : 'hidden' }}">
+                    <a href="{{ route('staff.tags.index') }}" class="block p-2 pl-4 rounded-lg transition-colors duration-200 {{ request()->routeIs('staff.tags.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fi fi-rr-list text-lg mr-2"></i>
+                        All Tags
+                    </a>
+                    <a href="{{ route('staff.tags.create') }}" class="block p-2 pl-4 rounded-lg transition-colors duration-200 {{ request()->routeIs('staff.tags.create') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="fi fi-rr-plus text-lg mr-2"></i>
+                        Create New Tag
+                    </a>
+                </div>
+            </div>
 
-    <!-- Onboarding Assistance -->
-    <div class="relative my-1 cursor-pointer">
-        <div onclick="toggleDropdown('onboardingDropdown')" class="flex relative my-1 w-full cursor-pointer">
-            <span class="w-4 rounded-xl absolute -left-2 h-full bg-white"></span>
-            <p class="ml-8 flex items-center w-full p-1 rounded-xl font-semibold text-gray-700 hover:bg-[#003355] hover:text-white transition">
-                <i class="fi fi-rr-briefcase text-2xl"></i>
-                <span class="px-2">Onboarding Assistance</span>
-            </p>
-        </div>
-        <div id="onboardingDropdown" class="hidden flex-col ml-8 mt-1 space-y-1">
-        <a href="{{ route('new.hire.orientation') }}" 
-   class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition-colors duration-300 ease-in-out">
-    New Hire Orientation
+             <!-- Final Interviews Section -->
+             <div class="mb-4">
+                <div onclick="toggleDropdown('interviewsDropdown')" class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors duration-200 {{ request()->routeIs('staff.final-interviews.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <div class="flex items-center">
+                        <i class="fi fi-rr-calendar text-xl mr-3"></i>
+                        <span>Final Interviews</span>
+                    </div>
+                    <i class="fi fi-rr-angle-small-down text-sm transition-transform duration-200" id="interviewsArrow"></i>
+                </div>
+                <div id="interviewsDropdown" class="ml-8 mt-1 space-y-1 {{ request()->routeIs('staff.final-interviews.*') ? 'block' : 'hidden' }}">
+                <a href="{{ route('staff.final-interviews.select-candidate') }}" class="btn btn-primary btn-sm">
+    <i class="fi fi-rr-plus mr-1"></i> Schedule Interview
 </a>
-    <a href="{{ route('staff.onboarding.documents') }}" 
-       class="block p-2 rounded-lg text-gray-800 hover:bg-[#003355] hover:text-white transition-colors duration-300 ease-in-out">
-        Document Collection
-    </a>
-    <a href="{{ route('staff.onboarding.training') }}" 
-       class="block p-2 rounded-lg text-gray-800 hover:bg-[#003355] hover:text-white transition-colors duration-300 ease-in-out">
-        Training & Courses
-    </a>
-</div>
-
-    </div>
-
-    <!-- Recruitment -->
-    <div class="relative my-1 cursor-pointer">
-        <div onclick="toggleDropdown('recruitmentDropdown')" class="flex relative my-1 w-full cursor-pointer">
-            <span class="w-4 rounded-xl absolute -left-2 h-full bg-white"></span>
-            <p class="ml-8 flex items-center w-full p-1 rounded-xl font-semibold text-gray-700 hover:bg-[#003355] hover:text-white transition">
-                <i class="fi fi-rr-users text-2xl"></i>
-                <span class="px-2">Recruitment</span>
-            </p>
+                </div>
+            </div>
         </div>
-        <div id="recruitmentDropdown" class="hidden flex-col ml-8 mt-1 space-y-1">
-            <a href="{{ route('staff.recruitment.documents') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Candidate</a>
-            <a href="{{ route('staff.recruitment.interview') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Interview</a>
-            <a href="{{ route('staff.recruitment.feedback') }}" class="block p-2 rounded-lg hover:bg-[#003355] hover:text-white transition">Feedback Submission</a>
-        </div>
-    </div>
+    </aside>
 
- 
-
-</aside>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+        @yield('content')
+    </main>
 </div>
 
 <script>
-  function toggleDropdown(id) {
-    let dropdown = document.getElementById(id);
-    dropdown.classList.toggle("hidden");
-  }
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const arrow = document.getElementById(`${dropdownId.replace('Dropdown', 'Arrow')}`);
+        
+        // Toggle current dropdown
+        dropdown.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+        
+        // Close other dropdowns
+        document.querySelectorAll('.sidebar-dropdown').forEach(item => {
+            if (item.id !== dropdownId && !item.classList.contains('hidden')) {
+                item.classList.add('hidden');
+                const otherArrow = document.getElementById(`${item.id.replace('Dropdown', 'Arrow')}`);
+                if (otherArrow) otherArrow.classList.remove('rotate-180');
+            }
+        });
+    }
+
+    // Auto-open dropdowns for active routes
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.sidebar-dropdown').forEach(dropdown => {
+            if (!dropdown.classList.contains('hidden')) {
+                const arrow = document.getElementById(`${dropdown.id.replace('Dropdown', 'Arrow')}`);
+                if (arrow) arrow.classList.add('rotate-180');
+            }
+        });
+    });
 </script>
 
-
-
-
-
-
-
-<!-- Load Flat Icons -->
-<!-- Flaticon / Fontisto Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons/css/all/all.min.css">
+<style>
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+</style>

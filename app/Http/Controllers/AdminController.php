@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Job;
 use Illuminate\Support\Facades\Auth;
 use App\Models\JobApplication;
+use App\Models\Candidate;
 
 
 class AdminController extends Controller
@@ -13,24 +14,7 @@ class AdminController extends Controller
     // Show the Admin Dashboard
     public function dashboard()
 {
-    $admin = Auth::user(); // Get the logged-in admin
-    $notifications = $admin->unreadNotifications; // Fetch unread notifications
-    $applications = JobApplication::with(['user', 'job'])->get(); // Fetch applications with related user and job data
-
-    $applicationStatusCounts = [
-        'for_admin_review' => JobApplication::where('application_status', 'for_admin_review')->count(), // ✅ Updated key
-        'new_application' => JobApplication::where('status', 'pending_review')->count(),
-        'rejected' => JobApplication::where('status', 'rejected')->count(),
-    ];
-
-    $statusCounts = [
-        'interview_scheduled' => JobApplication::where('status', 'interview_scheduled')->count(),
-        'interviewed' => JobApplication::where('status', 'interviewed')->count(),
-        'recommended_for_hiring' => JobApplication::where('status', 'recommended_for_hiring')->count(),
-        'hired' => JobApplication::where('status', 'hired')->count(),
-    ];
-
-    return view('admin.dashboard', compact('applications', 'applicationStatusCounts', 'statusCounts','notifications'));
+    
 }
 
     
@@ -85,4 +69,62 @@ public function welcome()
     }
 
 
+ 
+
+
+
+    // Admin dashboard - list candidates pending approval
+    public function candidates()
+    {
+        $candidates = Candidate::with(['tags', 'licenseVerification', 'tests'])
+            ->where('status', 'pending_approval')
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.candidates.index', compact('candidates'));
+    }
+
+    // Show candidate details for approval
+    public function reviewCandidate(Candidate $candidate)
+    {
+        $candidate->load(['tags', 'licenseVerification', 'tests', 'documents']);
+
+        return view('admin.candidates.review', compact('candidate'));
+    }
+
+    // Approve candidate
+    public function approveCandidate(Request $request, Candidate $candidate)
+    {
+        $request->validate([
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $candidate->update([
+            'status' => 'approved',
+            'admin_notes' => $request->admin_notes,
+        ]);
+
+        return redirect()->route('admin.candidates.index')
+            ->with('success', 'Candidate approved successfully');
+    }
+
+    // Reject candidate
+    public function rejectCandidate(Request $request, Candidate $candidate)
+    {
+        $request->validate([
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $candidate->update([
+            'status' => 'rejected',
+            'admin_notes' => $request->admin_notes,
+        ]);
+
+        return redirect()->route('admin.candidates.index')
+            ->with('success', 'Candidate rejected');
+    }
+
+
 }
+
+

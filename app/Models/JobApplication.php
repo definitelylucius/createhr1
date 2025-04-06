@@ -16,6 +16,15 @@ class JobApplication extends Model
     protected $fillable = [
         'user_id', 'job_id', 'name', 'email', 'resume', 'status', 'interview_date',
         'interview_status', 'application_status', 'reviewed_by', 'employee_status',
+        'skills', 'cdl_mentioned', 'experience_summary' // Added these
+    ];
+
+    protected $casts = [
+        'interview_date' => 'datetime',
+        'application_status' => 'string',
+        'status' => 'string',
+        'experience_summary' => 'array', // Add this for JSON casting
+        'cdl_mentioned' => 'boolean' // Add this for boolean casting
     ];
 
     // Define application process statuses
@@ -31,12 +40,46 @@ class JobApplication extends Model
 
     const STATUS_INTERVIEW_SCHEDULED = 'interview_scheduled';
    
+    protected $primaryKey = 'id'; // default
 
-    protected $casts = [
-        'interview_date' => 'datetime',
-        'application_status' => 'string',
-        'status' => 'string',
-    ];
+    
+    public function getMlPredictionAttribute()
+    {
+        return $this->experience_summary['ml_results']['prediction'] ?? null;
+    }
+
+    public function getMlConfidenceAttribute()
+    {
+        return $this->experience_summary['ml_results']['confidence'] ?? null;
+    }
+
+    public function getEnhancedSkillsAttribute()
+    {
+        return $this->experience_summary['ml_results']['enhanced_skills'] ?? [];
+    }
+
+    public function getMatchScoreAttribute()
+    {
+        return $this->experience_summary['match_score'] ?? 0;
+    }
+
+    public function getSkillsArrayAttribute()
+    {
+        return explode(', ', $this->skills);
+    }
+
+    public function hasMlData()
+    {
+        return isset($this->experience_summary['ml_results']);
+    }
+
+   
+
+    public function getResumeUrlAttribute()
+{
+    if (!$this->resume) return null;
+    return Storage::disk('resumes')->url($this->resume);
+}
 
     // Relationships
     public function job() {

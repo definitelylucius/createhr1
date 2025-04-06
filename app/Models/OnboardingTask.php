@@ -9,16 +9,17 @@ class OnboardingTask extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['employee_id', 'task_name', 'status', 'task_type'];
+    protected $fillable = [
+        'name',
+        'description',
+        'days_before_due',
+        'is_required'
+    ];
 
-
-    public function employee()
+    public function employees()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsToMany(User::class, 'employee_onboarding')
+            ->withPivot(['status', 'due_date', 'completed_at', 'notes'])
+            ->withTimestamps();
     }
-
-    public function job()
-{
-    return $this->belongsTo(Job::class);  // Assuming 'Job' is the related model
-}
 }

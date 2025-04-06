@@ -17,117 +17,220 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <title>Admin Dashboard</title>
+    <style>
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .compact-chart {
+            height: 220px !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-[Poppins]">
 
     <!-- Navbar -->
     @include('admincomponent.nav-bar')
 
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white shadow-lg flex flex-col h-screen">
+    <div class="flex min-h-[calc(100vh-4rem)]"> <!-- Subtract navbar height -->
+        <!-- Sidebar - Fixed width -->
+        <div class="w-64 flex-shrink-0 bg-white border-r border-gray-200 shadow-sm">
             @include('admincomponent.side-bar')
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 p-6 overflow-y-auto">
-
+        <!-- Main Content - Flexible width -->
+        <div class="flex-1 overflow-y-auto p-4">
             <!-- Header -->
-            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h1 class="text-3xl font-bold text-[#00446b]">Admin Dashboard</h1>
-                <p class="text-gray-600">Welcome back, {{ Auth::user()->name }}</p>
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                <h1 class="text-2xl font-bold text-[#00446b]">Admin Dashboard</h1>
+                <p class="text-sm text-gray-500">Welcome back, {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</p>
             </div>
 
             <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                
-                <!-- Admin Review -->
-                <div class="p-6 bg-blue-200 rounded-xl flex items-center justify-between shadow-lg">
-                    <div>
-                        <h3 class="font-semibold text-xl text-[#00446b]">Admin Review</h3>
-                        <p class="text-3xl font-bold">
-                            {{ $applicationStatusCounts['for_admin_review'] ?? '0' }}
-                        </p>
-                    </div>
-                    <div class="bg-blue-500 rounded-full p-4 text-white">
-                        <i class="fi fi-sr-user-clock"></i>
-                    </div>
-                </div>
-
-                <!-- Interview Schedule -->
-                <div class="p-6 bg-yellow-200 rounded-xl flex items-center justify-between shadow-lg">
-                    <div>
-                        <h3 class="text-xl font-semibold text-[#00446b]">Interview Schedule</h3>
-                        <p class="text-3xl font-bold">
-                            {{ $statusCounts['interview_scheduled'] ?? '0' }}
-                        </p>
-                    </div>
-                    <div class="bg-yellow-500 rounded-full p-4 text-white">
-                        <i class="fi fi-sr-calendar"></i>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <!-- Total Candidates Card -->
+                <div class="stat-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Candidates</p>
+                            <h3 class="text-xl font-bold mt-1">{{ $totalCandidates ?? 0 }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="text-green-500">+{{ $newCandidatesThisWeek ?? 0 }}</span> this week
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded-lg">
+                            <i class="fi fi-rr-users text-blue-400 text-lg"></i>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Hired -->
-                <div class="p-6 bg-green-200 rounded-xl flex items-center justify-between shadow-lg">
-                    <div>
-                        <h3 class="text-xl font-semibold text-[#00446b]">Hired</h3>
-                        <p class="text-3xl font-bold">
-                            {{ $statusCounts['hired'] ?? '0' }}
-                        </p>
-                    </div>
-                    <div class="bg-green-500 rounded-full p-4 text-white">
-                        <i class="fi fi-sr-briefcase"></i>
-                    </div>
-                </div>
-
-                <!-- Rejected -->
-                <div class="p-6 bg-red-200 rounded-xl flex items-center justify-between shadow-lg">
-                    <div>
-                        <h3 class="text-xl font-semibold text-[#00446b]">Rejected</h3>
-                        <p class="text-3xl font-bold">
-                            {{ $statusCounts['rejected'] ?? '0' }}
-                        </p>
-                    </div>
-                    <div class="bg-red-500 rounded-full p-4 text-white">
-                        <i class="fi fi-sr-times-circle"></i>
+                <!-- Pending Approvals Card -->
+                <div class="stat-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Approval</p>
+                            <h3 class="text-xl font-bold mt-1">{{ $pendingApproval ?? 0 }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="text-red-500">{{ $overdueApprovals ?? 0 }}</span> overdue
+                            </p>
+                        </div>
+                        <div class="bg-purple-50 p-2 rounded-lg">
+                            <i class="fi fi-rr-document-signed text-purple-400 text-lg"></i>
+                        </div>
                     </div>
                 </div>
 
-            </div>
+                <!-- For Review Card -->
+                <div class="stat-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">For Review</p>
+                            <h3 class="text-xl font-bold mt-1">{{ $forReviewCount ?? 0 }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="text-blue-500">{{ $reviewToday ?? 0 }}</span> today
+                            </p>
+                        </div>
+                        <div class="bg-orange-50 p-2 rounded-lg">
+                            <i class="fi fi-rr-time-past text-orange-400 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Applicant List Table -->
-            <div class="bg-white shadow-lg p-6 rounded-xl mt-8">
-                <h2 class="text-2xl font-bold text-[#00446b] mb-4">Applicant List</h2>
-                <div class="overflow-x-auto">
-                    @if($applications->isEmpty())
-                        <p>No applicants found.</p>
-                    @else
-                        <table class="w-full border border-gray-300 rounded-lg shadow-md">
-                            <thead>
-                                <tr class="bg-indigo-700 text-white">
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Email</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Job</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach ($applications as $applicant)
-                                    <tr class="hover:bg-indigo-50 transition duration-200">
-                                        <td class="px-4 py-3">{{ $applicant->user?->name ?? 'N/A' }}</td>
-                                        <td class="px-4 py-3">{{ $applicant->user?->email ?? 'N/A' }}</td>
-                                        <td class="px-4 py-3">{{ $applicant->job?->title ?? 'N/A' }}</td>
-                                        <td class="px-4 py-3 text-indigo-600 font-semibold">{{ ucfirst($applicant->status) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
+                <!-- Hired Candidates Card -->
+                <div class="stat-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Hired</p>
+                            <h3 class="text-xl font-bold mt-1">{{ $hiredCandidates ?? 0 }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="text-green-500">+{{ $hiredThisMonth ?? 0 }}</span> this month
+                            </p>
+                        </div>
+                        <div class="bg-green-50 p-2 rounded-lg">
+                            <i class="fi fi-rr-badge-check text-green-400 text-lg"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Charts and Recent Activity Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <!-- Application Status Chart -->
+                <div class="bg-white p-4 rounded-lg shadow-sm lg:col-span-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Application Status</h2>
+                        <select class="text-xs border rounded px-2 py-1 bg-gray-50">
+                            <option>This Month</option>
+                            <option>Last Month</option>
+                            <option>This Year</option>
+                        </select>
+                    </div>
+                    <div class="compact-chart">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Notifications Panel -->
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Notifications</h2>
+                        <span class="text-xs text-blue-500 hover:underline cursor-pointer">Mark all as read</span>
+                    </div>
+                    <div class="space-y-2 max-h-[220px] overflow-y-auto">
+                        @forelse($notifications ?? [] as $notification)
+                        <div class="flex items-start p-2 border rounded hover:bg-gray-50">
+                            <div class="bg-blue-50 p-1.5 rounded-full mr-2">
+                                <i class="fi fi-rr-bell text-blue-400 text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium">{{ $notification->data['message'] ?? '' }}</p>
+                                <p class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                        @empty
+                        <p class="text-xs text-gray-500 text-center py-2">No new notifications</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Queue -->
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Approval Queue</h2>
+                    <a href="{{ route('admin.candidates.index') }}" class="text-xs text-blue-500 hover:underline">View All</a>
+                </div>
+                <div class="space-y-2 max-h-[220px] overflow-y-auto">
+                    @forelse($approvalQueue ?? [] as $candidate)
+                    <div class="flex items-center justify-between p-2 border rounded hover:bg-gray-50">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-50 p-1.5 rounded-full mr-2">
+                                <i class="fi fi-rr-time-past text-yellow-400 text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium">{{ $candidate->full_name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $candidate->job->title ?? 'N/A' }}
+                                </p>
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.candidates.review', ['candidate' => $candidate->id]) }}" class="text-blue-400 hover:text-blue-500">
+                            <i class="fi fi-rr-eye text-xs"></i>
+                        </a>
+                    </div>
+                    @empty
+                    <p class="text-xs text-gray-500 text-center py-2">No candidates pending approval</p>
+                    @endforelse
+                </div>
+            </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const statusChart = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['New', 'Under Review', 'Approved', 'Rejected', 'Hired'],
+                    datasets: [{
+                        label: 'Applications',
+                        data: {!! json_encode($statusData ?? [0, 0, 0, 0, 0]) !!},
+                        backgroundColor: [
+                            '#3B82F6', // blue
+                            '#F59E0B', // amber
+                            '#10B981', // emerald
+                            '#EF4444', // red
+                            '#8B5CF6', // violet
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            bodyFont: {
+                                size: 10
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

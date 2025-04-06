@@ -49,4 +49,9 @@ class Job extends Model
     {
         return $this->belongsTo(Department::class); // Assuming the foreign key is 'department_id'
     }
+
+    public function candidates()
+    {
+        return $this->hasMany(Candidate::class);
+    }
 }

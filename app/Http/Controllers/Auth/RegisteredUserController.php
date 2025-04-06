@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -26,29 +24,31 @@ class RegisteredUserController extends Controller
      * Handle applicant registration.
      */
     public function store(Request $request)
-    {
-        // Validate input
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+{
+    // Validate input
+    $request->validate([
+        'first_name' => ['required', 'string', 'max:255'],
+        'last_name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'confirmed', Rules\Password::defaults()],
+    ]);
 
-        // Create applicant
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'applicant', // Default role for applicants
-        ]);
+    // Create applicant
+    $user = User::create([
+        'first_name' => $request->first_name,  // Save first name
+        'last_name' => $request->last_name,    // Save last name
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => 'applicant', // Default role for applicants
+    ]);
 
-        event(new Registered($user));
+    event(new Registered($user));
 
-        // Automatically log in the applicant
-        Auth::login($user);
+    // Automatically log in the applicant
+    Auth::login($user);
 
-        return redirect()->route('login')->with('success', 'Registration successful');
-    }
+    return redirect()->route('login')->with('success', 'Registration successful');
+}
 
     /**
      * Show the user creation form for super admin.
@@ -70,7 +70,8 @@ class RegisteredUserController extends Controller
 
         // Validate input
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'firstname' => ['required', 'string', 'max:255'],
+            'lastname' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'in:admin,staff,employee,applicant'], // Role selection
@@ -78,7 +79,8 @@ class RegisteredUserController extends Controller
 
         // Create the user with selected role
         User::create([
-            'name' => $request->name,
+            'firstname' => $request->firstname,  // Save firstname
+            'lastname' => $request->lastname,    // Save lastname
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role, // Assign the chosen role

@@ -145,10 +145,11 @@
 </section>
 
 <div x-data='{
-        jobs: @json($jobs),
-        selectedJob: null,
-        searchQuery: ""
-    }' class="container mx-auto px-6 py-12">
+    jobs: @json($jobs),  // ✅ Correct
+    selectedJob: null,
+    searchQuery: ""
+}
+' class="container mx-auto px-6 py-12">
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Left Column: Job Listings -->
@@ -242,10 +243,7 @@
                 </p>
             </div>
 
-            <div class="mt-4">
-                <h3 class="text-lg font-semibold text-gray-800">Application Deadline</h3>
-                <p class="text-gray-600" x-text="selectedJob.application_deadline"></p>
-            </div>
+           
 
             <div class="mt-4">
                 <h3 class="text-lg font-semibold text-gray-800">Status</h3>
@@ -263,20 +261,125 @@
     </button>
 </div>
 
+<!-- Debug Database Parsing Results -->
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
 
+@php
+    function formatBytes($bytes, $precision = 2) {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $bytes /= pow(1024, $pow);
+        return number_format($bytes, $precision) . ' ' . $units[$pow];
+    }
+@endphp
 
+@if(session('success'))
+<div class="fixed bottom-4 right-4 w-96 bg-white shadow-lg rounded-lg border border-gray-300 z-50" style="cursor: grab">
+    <div class="bg-green-500 text-white p-3 rounded-t-lg flex justify-between items-center">
+        <h3 class="font-bold">Application Submitted</h3>
+        <button onclick="this.closest('.fixed').remove();" class="text-white hover:text-gray-200">
+            &times;
+        </button>
+    </div>
 
+    <div class="p-4 max-h-96 overflow-y-auto">
+        @php
+            // Fetch the latest candidate details (submitted by the authenticated user)
+            $candidate = auth()->user()->candidates()->latest()->first();
+            
+            // Fetch the candidate's resume document
+            $candidateDocument = $candidate ? $candidate->documents()->where('type', 'resume')->latest()->first() : null;
+            $fileExists = $candidateDocument && Storage::disk('candidate_documents')->exists($candidateDocument->file_path);
+            $fileSize = $fileExists ? Storage::disk('candidate_documents')->size($candidateDocument->file_path) : 0;
 
+            // Fetch parsed resume data if available
+            $parsedResume = $candidate ? $candidate->parsedResumes()->latest()->first() : null;
+        @endphp
+
+       
+
+        <!-- Candidate Info -->
+        <div class="mb-4">
+            <h4 class="font-medium text-sm text-gray-700 mb-1">Candidate Details</h4>
+            <div class="text-xs space-y-1">
+                <p><strong class="w-32 inline-block">First Name:</strong> {{ $candidate->first_name ?? 'NULL' }}</p>
+                <p><strong class="w-32 inline-block">Last Name:</strong> {{ $candidate->last_name ?? 'NULL' }}</p>
+                <p><strong class="w-32 inline-block">Email:</strong> {{ $candidate->email ?? 'NULL' }}</p>
+                <p><strong class="w-32 inline-block">Phone:</strong> {{ $candidate->phone ?? 'NULL' }}</p>
+                <p><strong class="w-32 inline-block">Status:</strong> {{ $candidate->status ?? 'NULL' }}</p>
+            </div>
+        </div>
+
+        <!-- Resume File Storage -->
+        @if($fileExists)
+        <div class="mt-3 text-xs">
+            <h4 class="font-medium text-sm text-gray-700 mb-1">File Storage</h4>
+            <p>
+                <strong>Exists:</strong> YES
+            </p>
+            <p>
+                <strong>Size:</strong> {{ formatBytes($fileSize) }}
+            </p>
+        </div>
+        @else
+        <div class="mt-3 text-xs">
+            <h4 class="font-medium text-sm text-gray-700 mb-1">File Storage</h4>
+            <p><strong>Exists:</strong> NO</p>
+            <p><strong>Size:</strong> 0 bytes</p>
+        </div>
+        @endif
+
+        <!-- Parsed Resume Data -->
+        @if($parsedResume)
+        <div class="mt-4">
+            <h4 class="font-medium text-sm text-gray-700 mb-1">Parsed Resume Data</h4>
+            <div class="text-xs space-y-1">
+                <p><strong class="w-32 inline-block">Skills:</strong> {{ implode(', ', $parsedResume->skills ?? []) }}</p>
+                <p><strong class="w-32 inline-block">Experience Years:</strong> {{ $parsedResume->experience_years ?? 'N/A' }}</p>
+                <p><strong class="w-32 inline-block">Education:</strong> {{ $parsedResume->education ?? 'N/A' }}</p>
+                <p><strong class="w-32 inline-block">Job History:</strong> {{ implode(', ', $parsedResume->job_history ?? []) }}</p>
+            </div>
+        </div>
+        @else
+        <div class="mt-4 text-xs">
+            <p>No parsed resume data available.</p>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
 
 <script>
-function toggleSettingsDropdown() {
-        const dropdown = document.getElementById('settingsDropdown');
-        dropdown.classList.toggle('hidden');
-    }
+// Close the notification when the close button is clicked
+document.querySelector('button').addEventListener('click', function() {
+    this.parentElement.parentElement.remove();
+});
 
-    
-        
+// Auto-refresh debug info every 5 seconds (optional)
+let debugRefreshInterval;
+function startDebugRefresh() {
+    debugRefreshInterval = setInterval(() => {
+        // Refresh logic (optional)
+        console.log('Notification panel active - would refresh now');
+    }, 5000);
+}
+
+// Start the refresh if the panel is visible
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('[data-debug-panel]')) {
+        startDebugRefresh();
+    }
+});
+
+function toggleSettingsDropdown() {
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.classList.toggle('hidden');
+        }
 </script>
+
 </body>
 </html>
 

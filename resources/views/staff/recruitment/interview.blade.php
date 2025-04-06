@@ -100,22 +100,7 @@
                         </a>
                     </div>
 
-                    <!-- Interview Invitation Form -->
-                    <div class="mt-6 bg-white p-4 shadow-md rounded-md">
-                        <h3 class="text-lg font-semibold mb-2">Send Interview Invitation</h3>
-                        <form action="{{ route('staff.recruitment.sendInterviewEmail', $application->id) }}" method="POST">
-    @csrf
-                            <label class="block text-sm font-medium">Subject:</label>
-                            <input type="text" name="subject" class="w-full p-2 border rounded-md" required>
-
-                            <label class="block text-sm font-medium mt-2">Message:</label>
-                            <textarea name="message" class="w-full p-2 border rounded-md" required></textarea>
-
-                            <button type="submit" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
-                                📩 Send Invitation
-                            </button>
-                        </form>
-                    </div>
+                   
 
                     <!-- Complete Interview Form -->
                     <div class="mt-6">

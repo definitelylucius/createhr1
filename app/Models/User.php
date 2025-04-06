@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use PragmaRX\Google2FA\Google2FA;
+use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable
 {
@@ -19,12 +21,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
-         'role',
-         'employee_status'
+        'role',
+        'employee_status',
     ];
+    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -48,6 +52,17 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function setGoogle2faSecretAttribute($value)
+    {
+        $this->attributes['google2fa_secret'] = Crypt::encrypt($value);
+    }
+
+    public function getGoogle2faSecretAttribute($value)
+    {
+        return Crypt::decrypt($value);
+    }
+
 
     public function isSuperAdmin()
     {
@@ -90,10 +105,7 @@ public function employee()
     {
         return $this->belongsTo(Job::class, 'job_id'); // Ensure the correct foreign key is used
     }
-    public function documents()
-    {
-        return $this->hasMany(Document::class, 'user_id'); // Ensure 'user_id' exists in the 'documents' table
-    }
+  
 
     public function employeeOnboarding()
 {
@@ -108,5 +120,37 @@ public function tasks()
 {
     return $this->hasMany(Task::class, 'user_id');
 }
+public function jobApplications()
+{
+    return $this->hasMany(JobApplication::class);
 }
+
+public function candidates()
+{
+    return $this->hasMany(Candidate::class);
+}
+
+public function onboardingTasks()
+{
+    return $this->belongsToMany(OnboardingTask::class, 'employee_onboarding')
+        ->withPivot(['status', 'due_date', 'completed_at', 'notes'])
+        ->withTimestamps();
+}
+
+public function documents()
+{
+    return $this->hasMany(EmployeeDocument::class);
+}
+
+public function manager()
+{
+    return $this->belongsTo(User::class, 'manager_id');
+}
+
+public function teamMembers()
+{
+    return $this->hasMany(User::class, 'manager_id');
+}
+}
+
 

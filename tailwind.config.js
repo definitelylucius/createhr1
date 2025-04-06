@@ -11,42 +11,59 @@ export default {
         "./resources/**/*.vue"
     ],
 
+    darkMode: false, // Disables Tailwind's dark mode
+
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                primary: {
+                    50: '#f0f9ff',
+                    100: '#e0f2fe',
+                    200: '#bae6fd',
+                    300: '#7dd3fc',
+                    400: '#38bdf8',
+                    500: '#0ea5e9',
+                    600: '#0284c7',
+                    700: '#0369a1',
+                    800: '#075985',
+                    900: '#0c4a6e',
+                },
+            }
         },
     },
 
-    plugins: [forms],
     plugins: [
+        forms,
         require('daisyui'),
-      ],
-    
-      content: [
-        "./resources/**/*.{html,js,php}", // Include paths where Tailwind looks for class names
-      ],
-      theme: {
-        extend: {},
-      },
-      plugins: [require("daisyui")], // DaisyUI plugin included
-      daisyui: {
+    ],
+
+    daisyui: {
         themes: [
-          {
-            mytheme: {
-              "primary": "#00446b",  // Dark blue primary
-              "secondary": "#005f8f",
-              "accent": "#00b4d8",
-              "neutral": "#2d3748",
-              "base-100": "#f8fafc",
-              "info": "#3b82f6",
-              "success": "#22c55e",
-              "warning": "#facc15",
-              "error": "#ef4444",
-              "text-base": "#1e293b",  // Default text color
+            {
+                corporate: {
+                    "primary": "#2563eb",
+                    "secondary": "#4b5563",
+                    "accent": "#1d4ed8",
+                    "neutral": "#1f2937",
+                    "base-100": "#ffffff",
+                    "info": "#3b82f6",
+                    "success": "#10b981",
+                    "warning": "#f59e0b",
+                    "error": "#ef4444",
+                    "--rounded-box": "0.5rem",
+                    "--rounded-btn": "0.25rem",
+                },
             },
-          },
+            "light"
         ],
-      },
-    };
+        darkTheme: false, // Disables DaisyUI's dark theme
+        base: true,
+        styled: true,
+        utils: true,
+        prefix: "",
+        logs: true,
+    },
+};

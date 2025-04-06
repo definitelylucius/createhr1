@@ -1,88 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/relativeTime.min.js"></script>
-<script>
-    dayjs.extend(dayjs_plugin_relativeTime);
-</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/relativeTime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+
+    <script>
+        dayjs.extend(dayjs_plugin_relativeTime);
+    </script>
     <link rel="stylesheet" href="styles/global.css">
     <link rel="stylesheet" href="styles/login.css">
     <title>NexFleetDynamics</title>
 </head>
 
 <body>
-<header class="bg-white py-4 px-6 flex justify-between items-center border-b border-gray-300 shadow-lg relative">
-    <div class="font-bold text-2xl text-center text-[#00446b]">Nexfleet Dynamics</div>
-    <div class="flex items-center space-x-4 relative">
-        <!-- Profile Icon -->
-        <button type="button" class="p-2 rounded-full hover:bg-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </button>
+    <header class="bg-white py-4 px-6 flex justify-between items-center border-b border-gray-300 shadow-lg relative">
+        <div class="font-bold text-2xl text-center text-[#00446b]">Nexfleet Dynamics</div>
+        <div class="flex items-center space-x-4 relative">
+            <!-- Profile and Settings Icons -->
+        </div>
+    </header>
 
-        <!-- Settings Icon with Dropdown -->
-        <div class="relative">
-            <button type="button" onclick="toggleSettingsDropdown()" class="p-2 rounded-full hover:bg-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                </svg>
-            </button>
-
-            <!-- Settings Dropdown -->
-            <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
-                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Settings</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">
-                        {{ __('Log Out') }}
-                    </button>
-                </form>
+    <div class="container mx-auto px-6 py-12">
+        <!-- Success Message -->
+        @if(session('success'))
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg" role="alert">
+            <p class="font-medium">{{ session('success') }}</p>
+            <div class="mt-3 p-3 bg-white rounded border border-green-200">
+                <h4 class="font-medium text-green-800">Thank you for applying!</h4>
+                <p class="text-sm text-gray-700 mt-1">
+                    Your application has been received and is currently under review. We’ll contact you if you’re shortlisted for the next step.
+                </p>
             </div>
         </div>
+        @endif
+
+        <!-- Department Badge -->
+        <div class="flex items-center mb-4">
+            <h2 class="text-2xl font-bold text-blue-700 mr-4">Apply for {{ $job->title ?? 'Position' }}</h2>
+            @if(!empty($job->department))
+            <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {{ $job->department }} 
+            </span>
+            @endif
+        </div>
+
+        <!-- Department-Specific Requirements -->
+        <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+            <h3 class="font-semibold text-lg text-blue-800 mb-2">Key Qualifications:</h3>
+            <ul class="list-disc pl-5 space-y-1">
+                @forelse($job->requirements ?? [] as $requirement)
+                    <li>{{ $requirement }}</li>
+                @empty
+                    <li class="text-gray-500">No specific requirements listed</li>
+                @endforelse
+            </ul>
+
+            @if(in_array($job->department ?? null, ['Bus Transportation', 'Safety and Compliance']))
+            <p class="mt-2 text-sm text-blue-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                </svg>
+                CDL license preferred for this position
+            </p>
+            @endif
+        </div>
+
+        <!-- Application Form -->
+        <form method="POST" action="{{ route('candidates.store') }}" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            @csrf
+
+            <!-- Job ID hidden input -->
+            <input type="hidden" name="job_id" value="{{ $job->id }}">
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">First Name</label>
+                    <input type="text" name="first_name" 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        required value="{{ old('first_name') }}">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Last Name</label>
+                    <input type="text" name="last_name" 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        required value="{{ old('last_name') }}">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Email</label>
+                    <input type="email" name="email" 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        required value="{{ old('email') }}">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Phone (Optional)</label>
+                    <input type="text" name="phone" 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        value="{{ old('phone') }}">
+                </div>
+            </div>
+
+            <div x-data="{ fileName: '' }">
+    <label class="block text-gray-700 font-medium mb-1">Upload Resume</label>
+    <div class="flex items-center justify-center w-full"
+        @click="$refs.fileInput.click()"
+        @dragover.prevent="$event.dataTransfer.dropEffect = 'copy';"
+        @drop.prevent="
+            fileName = $event.dataTransfer.files[0]?.name;
+            $refs.fileInput.files = $event.dataTransfer.files;
+            console.log('File dropped:', fileName); 
+        ">
+        <div class="flex flex-col w-full border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+            <!-- When no file is selected -->
+            <template x-if="!fileName">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6 px-4">
+                    <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                    </svg>
+                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p class="text-xs text-gray-500">PDF or DOCX (MAX. 2MB)</p>
+                </div>
+            </template>
+            <!-- When a file is selected -->
+            <template x-if="fileName">
+                <div class="p-4 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-2 font-medium" x-text="fileName"></p>
+                </div>
+            </template>
+        </div>
     </div>
-</header>
-
-<div class="container mx-auto px-6 py-12">
-    <h2 class="text-2xl font-bold text-blue-700">Apply for {{ $job->title }}</h2>
-
-    <form action="{{ route('submit.application', $job->id) }}" method="POST" enctype="multipart/form-data">
-
-        @csrf
-        <div class="mt-4">
-            <label class="block text-gray-700">Full Name</label>
-            <input type="text" name="name" class="input input-bordered w-full mt-2" required>
-        </div>
-
-        <div class="mt-4">
-            <label class="block text-gray-700">Email</label>
-            <input type="email" name="email" class="input input-bordered w-full mt-2" required>
-        </div>
-
-        <div class="mt-4">
-            <label class="block text-gray-700">Upload Resume</label>
-            <input type="file" name="resume" class="file-input file-input-bordered w-full mt-2" required>
-        </div>
-
-        <button type="submit" class="mt-6 bg-[#00446b] text-white px-6 py-2 rounded-md hover:bg-[#1F2936]">
-            Submit Application
-        </button>
-    </form>
+    <input type="file" name="resume" x-ref="fileInput" class="hidden" accept=".pdf, .doc, .docx" 
+        @change="fileName = $refs.fileInput.files[0]?.name; console.log('File selected:', fileName)" />
 </div>
 
 
-<script>
-    function toggleSettingsDropdown() {
-        const dropdown = document.getElementById('settingsDropdown');
-        dropdown.classList.toggle('hidden');
-    }
-</script>
+            <!-- Submit buttons -->
+            <div class="mt-8 flex justify-end space-x-4">
+                <button type="button" onclick="window.history.back()" 
+                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="bg-[#00446b] hover:bg-[#003355] text-white font-medium py-2 px-6 rounded-lg transition duration-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Submit Application
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <script>
+        // Alpine.js handles our form interactions now
+        function toggleSettingsDropdown() {
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>

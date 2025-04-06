@@ -1,82 +1,86 @@
-<aside class="w-64 bg-white border-r border-gray-200 p-4 shadow-lg h-screen flex flex-col">
-
-    <div class="flex flex-col">
+<aside class="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 shadow-lg overflow-y-auto z-40 transition-all duration-200">
+    <div class="flex flex-col p-4 space-y-2 h-full">
         <!-- Home -->
-        <div class="flex flex-col relative my-1 cursor-pointer">
-            <a href="/admin/dashboard" class="flex items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->is('admin/dashboard') ? 'bg-gray-200 text-gray-800' : 'hover:bg-gray-100' }}
-
-                    <i class="fi fi-sr-home text-xl"></i>
-                    <span class="text-lg">Home</span>
-                </span>
+        <div class="relative">
+            <a href="/admin/dashboard" class="flex items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->is('admin/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                <i class="fi fi-sr-home text-lg"></i>
+                <span class="text-md ml-3">Home</span>
             </a>
         </div>
 
+        <!-- Candidate Review -->
+        <div class="relative">
+            <button class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.candidates.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}" onclick="toggleDropdown('candidateReviewDropdown')">
+                <span class="flex items-center gap-2">
+                    <i class="fi fi-sr-user-check text-lg"></i>
+                    <span class="text-md">Candidate Review</span>
+                </span>
+                <i class="fi fi-sr-angle-small-down text-sm transition-transform duration-200" id="candidateReviewDropdownIcon"></i>
+            </button>
+            <div id="candidateReviewDropdown" class="hidden flex-col ml-8 mt-1 space-y-1 transition-all duration-200">
+                <a href="{{ route('admin.candidates.index') }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.candidates.index') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    Review Candidates
+                </a>
+                <a href="{{ route('admin.candidates.approvalQueue') }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.candidates.approvalQueue') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    Approval Queue
+                </a>
+            </div>
+        </div>
+
         <!-- Job Requisitions -->
-        <div class="relative my-1 cursor-pointer">
-            <div class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 hover:bg-gray-100" onclick="toggleDropdown('jobRequisitionDropdown')">
+        <div class="relative">
+            <button class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.jobs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}" onclick="toggleDropdown('jobRequisitionDropdown')">
                 <span class="flex items-center gap-2">
-                    <i class="fi fi-sr-briefcase text-xl"></i>
-                    <span class="text-lg">Job Requisitions</span>
+                    <i class="fi fi-sr-briefcase text-lg"></i>
+                    <span class="text-md">Job Requisitions</span>
                 </span>
-            </div>
-            <div id="jobRequisitionDropdown" class="hidden flex-col ml-2 mt-1 space-y-1 transition-all duration-200">
-                <a href="{{ route('admin.jobs.create') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Create New Requisition</a>
-                <a href="{{ route('admin.jobs.manage') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">View All Requisitions</a>
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Requisition Approval</a>
+                <i class="fi fi-sr-angle-small-down text-sm transition-transform duration-200" id="jobRequisitionDropdownIcon"></i>
+            </button>
+            <div id="jobRequisitionDropdown" class="hidden flex-col ml-8 mt-1 space-y-1 transition-all duration-200">
+                <a href="{{ route('admin.jobs.create') }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.jobs.create') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    Create New Requisition
+                </a>
+                <a href="{{ route('admin.jobs.manage') }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.jobs.manage') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    View All Requisitions
+                </a>
             </div>
         </div>
 
-        <!-- Onboarding -->
-        <div class="relative my-1 cursor-pointer">
-            <div class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 hover:bg-gray-100" onclick="toggleDropdown('onboardingDropdown')">
-                <span class="flex items-center gap-2">
-                    <i class="fi fi-sr-user-add text-xl"></i>
-                    <span class="text-lg">Onboarding</span>
-                </span>
-            </div>
-            <div id="onboardingDropdown" class="hidden flex-col ml-2 mt-1 space-y-1 transition-all duration-200">
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">New Hire Profiles</a>
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Onboarding Progress</a>
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Task Management</a>
-            </div>
-        </div>
+       
 
-        <!-- Recruitment Overview -->
-        <div class="relative my-1 cursor-pointer">
-            <div class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 hover:bg-gray-100" onclick="toggleDropdown('recruitmentDropdown')">
+        <!-- Hiring Decisions -->
+        <div class="relative">
+            <button class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.hiring-decisions.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}" onclick="toggleDropdown('hiringDecisionsDropdown')">
                 <span class="flex items-center gap-2">
-                    <i class="fi fi-sr-users-alt text-xl"></i>
-                    <span class="text-lg">Recruitment Overview</span>
+                    <i class="fi fi-sr-user-check text-lg"></i>
+                    <span class="text-md">Hiring Decisions</span>
                 </span>
-            </div>
-            <div id="recruitmentDropdown" class="hidden flex-col ml-2 mt-1 space-y-1 transition-all duration-200">
-                <a href="{{ route('admin.applicants.review') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Candidate</a>
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Interview Schedule</a>
-                <a href="{{ route('admin.applicants.hired') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Offer</a>
-            </div>
-        </div>
+                <i class="fi fi-sr-angle-small-down text-sm transition-transform duration-200" id="hiringDecisionsDropdownIcon"></i>
+            </button>
 
-        <!-- Applicant Management -->
-        <div class="relative my-1 cursor-pointer">
-            <div class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 hover:bg-gray-100" onclick="toggleDropdown('applicantDropdown')">
-                <span class="flex items-center gap-2">
-                    <i class="fi fi-sr-file-user text-xl"></i>
-                    <span class="text-lg">Applicant Management</span>
-                </span>
-            </div>
-            <div id="applicantDropdown" class="hidden flex-col ml-2 mt-1 space-y-1 transition-all duration-200">
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">All Applications</a>
-                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Archived Applications</a>
-            </div>
-        </div>
-
-        <!-- Reports -->
-        <div class="relative my-1 cursor-pointer">
-            <div class="flex justify-between items-center p-2 w-full rounded-lg transition-colors duration-200 hover:bg-gray-100" onclick="toggleDropdown('reportsDropdown')">
-                <span class="flex items-center gap-2">
-                    <i class="fi fi-sr-chart-pie text-xl"></i>
-                    <span class="text-lg">Reports</span>
-                </span>
+            <div id="hiringDecisionsDropdown" class="hidden flex-col ml-8 mt-1 space-y-1 transition-all duration-200">
+            <a href="{{ route('admin.hiring-decisions.ready') }}" class="flex items-center p-2 w-full rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.hiring-decisions.ready') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                <i class="fi fi-sr-user-check text-lg"></i>
+                <span class="text-md ml-3">Ready for Hire</span>
+                @php
+                    $readyCount = \App\Models\Candidate::where('status', 'final_interview_completed')
+                        ->whereDoesntHave('hiringDecision')
+                        ->count();
+                @endphp
+                @if($readyCount > 0)
+                    <span class="ml-auto bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                        {{ $readyCount }}
+                    </span>
+                @endif
+            </a>
+                <a href="{{ route('admin.hiring-decisions.index') }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.hiring-decisions.index') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    All Decisions
+                </a>
+                @can('make_hiring_decision')
+                <a href="{{ route('admin.hiring-decisions.create', ['candidate' => 0]) }}" class="flex items-center p-2 rounded-lg text-sm {{ request()->routeIs('admin.hiring-decisions.create') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100' }}">
+                    Create Decision
+                </a>
+                @endcan
             </div>
         </div>
     </div>
@@ -85,8 +89,40 @@
 <script>
     function toggleDropdown(dropdownId) {
         const dropdown = document.getElementById(dropdownId);
+        const icon = document.getElementById(`${dropdownId}Icon`);
+        
         dropdown.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+        
+        // Close other dropdowns when opening a new one
+        if (!dropdown.classList.contains('hidden')) {
+            document.querySelectorAll('[id$="Dropdown"]').forEach(otherDropdown => {
+                if (otherDropdown.id !== dropdownId && !otherDropdown.classList.contains('hidden')) {
+                    otherDropdown.classList.add('hidden');
+                    const otherIcon = document.getElementById(`${otherDropdown.id}Icon`);
+                    if (otherIcon) otherIcon.classList.remove('rotate-180');
+                }
+            });
+        }
     }
+    
+    // Automatically open dropdown if current route matches
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdowns = ['candidateReviewDropdown', 'jobRequisitionDropdown', 'hiringDecisionsDropdown'];
+        
+        dropdowns.forEach(dropdownId => {
+            const dropdown = document.getElementById(dropdownId);
+            if (dropdown) {
+                const links = dropdown.querySelectorAll('a');
+                
+                links.forEach(link => {
+                    if (link.classList.contains('bg-blue-50')) {
+                        document.getElementById(dropdownId).classList.remove('hidden');
+                        const icon = document.getElementById(`${dropdownId}Icon`);
+                        if (icon) icon.classList.add('rotate-180');
+                    }
+                });
+            }
+        });
+    });
 </script>
-
-

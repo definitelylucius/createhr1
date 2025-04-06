@@ -29,13 +29,9 @@ return [
     */
 
     'disks' => [
-
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app/private'),
-            'serve' => true,
-            'throw' => false,
-            'report' => false,
+            'root' => storage_path('app'),
         ],
 
         'public' => [
@@ -43,9 +39,27 @@ return [
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
-            'throw' => false,
-            'report' => false,
         ],
+
+'resumes' => [
+    'driver' => 'local',
+    'root' => storage_path('app/public/resumes'), // Standard public location
+    'url' => env('APP_URL').'/storage/resumes',
+    'visibility' => 'public',
+],
+
+'candidate_documents' => [
+    'driver' => 'local',
+    'root' => storage_path('app/candidate_documents'),
+    'url' => env('APP_URL') . '/storage/candidate_documents',
+    'visibility' => 'public',
+],
+
+
+    
+
+  
+
 
         's3' => [
             'driver' => 's3',

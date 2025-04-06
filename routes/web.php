@@ -1,5 +1,8 @@
 <?php
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\LocalResumeParser;
+use Illuminate\Support\Str;
+use Smalot\PdfParser\Parser;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProfileController;
@@ -34,19 +37,29 @@ use App\Http\Controllers\DocumentGenerateController;
 use App\Http\Controllers\EmployeeOnboardingController;
 
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+
+
+use App\Http\Controllers\CandidateController;
+
+use App\Http\Controllers\CandidateTagController;
+
+use App\Http\Controllers\Staff\FinalInterviewController;
+use App\Http\Controllers\Admin\HiringDecisionController;
 
 
 
 
 
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+
+
 
 Route::get('/', [JobController::class, 'index'])->name('home');
 
-
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
 
 
 
@@ -151,7 +164,7 @@ Route::get('/', [JobController::class, 'welcome']);
 
 //ADMIN CONTROLLER
 
-Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
 
 
 
@@ -207,6 +220,24 @@ Route::middleware(['auth'])->group(function () {
 
 
 //Staff
+
+
+# ********************************************
+#   STAFF CANDIDATESCREENING   
+# ********************************************
+
+
+Route::get('/storage-debug', function() {
+    $testFile = 'test_'.time().'.txt';
+    Storage::disk('resumes')->put($testFile, 'test content');
+    
+    return [
+        'config_path' => config('filesystems.disks.resumes.root'),
+        'actual_path' => Storage::disk('resumes')->path($testFile),
+        'file_exists' => file_exists(Storage::disk('resumes')->path($testFile)),
+        'directory_listing' => scandir(config('filesystems.disks.resumes.root'))
+    ];
+});
 
 
 
@@ -586,37 +617,9 @@ Route::post('/onboarding/upload-documents', [OnboardingController::class, 'uploa
 
 
 
-// EMPLOYEE ONBOARDING
-Route::prefix('employee')->middleware('auth')->group(function () {
-    Route::get('/onboarding/orientation/{employeeId?}', [EmployeeController::class, 'orientation'])->name('employee.onboarding.orientation');
 
-    Route::post('/onboarding/update-video-progress', [EmployeeController::class, 'updateVideoProgress']);
-    Route::post('/onboarding/progress', [OnboardingController::class, 'updateProgress'])
-    ->name('onboarding.updateProgress');
-    Route::post('/onboarding/update-progress', [EmployeeController::class, 'updateTaskProgress'])->name('onboarding.updateProgress');
-    Route::post('/staff/onboarding/verify/{id}', [EmployeeController::class, 'verifyOnboarding'])->name('staff.verifyOnboarding');
-    Route::post('/upload-documents', [EmployeeController::class, 'uploadDocuments'])->name('uploadDocuments');
-    Route::post('/upload-documents', [EmployeeController::class, 'uploadDocuments'])->name('employee.uploadDocuments');
-    Route::post('/onboarding/update-progress', [OnboardingController::class, 'updateProgress'])->name('onboarding.updateProgress');
-    Route::get('/onboarding', [EmployeeController::class, 'showOnboarding'])->name('onboarding.view');
-    Route::get('/onboarding', [EmployeeController::class, 'showOnboarding'])->name('onboarding.view');
-    Route::post('/onboarding/orientation', [EmployeeController::class, 'updateProgress'])->name('onboarding.updateProgress');
-    Route::get('/onboarding', [EmployeeController::class, 'showOnboarding'])->name('onboarding.show');
-    Route::post('/onboarding/update-progress', [EmployeeController::class, 'updateProgress'])->name('onboarding.updateProgress');
 
-    Route::post('/onboarding/update', [EmployeeNewhiredController::class, 'updateStatus'])->name('onboarding.update');
-    Route::get('/onboarding/status', [EmployeeNewhiredController::class, 'getStatus'])->name('onboarding.status');
 
-});
-
-//ONBOARDING:
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/employee/onboarding', [OnboardingController::class, 'showForm'])->name('employee.onboarding.form');
-    Route::post('/employee/onboarding/submit', [OnboardingController::class, 'submitForm'])->name('employee.onboarding.submit');
-
-    Route::get('/staff/onboarding', [StaffController::class, 'viewOnboardingSummary'])->name('staff.onboarding.summary');
-});
 
 //DOCUMENT GENEERATE
 Route::get('/generate-nda/{id}', [DocumentGenerateController::class, 'generateNDA'])->name('generate.nda');
@@ -627,29 +630,152 @@ Route::get('/generate/hiring-contract/{id}', [DocumentGenerateController::class,
 
 
 
-//FILE
 
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/onboarding', [EmployeeOnboardingController::class, 'index'])->name('onboarding');
-    Route::post('/onboarding/employee-details', [EmployeeOnboardingController::class, 'storeEmployeeDetails']);
-    Route::post('/onboarding/personal-details', [EmployeeOnboardingController::class, 'storePersonalDetails']);
-    Route::post('/onboarding/upload-document', [EmployeeOnboardingController::class, 'uploadDocument']);
-    Route::post('/onboarding/bank-details', [EmployeeOnboardingController::class, 'storeBankDetails']);
+
+
+
+
+
+///CAANDIDATE
+Route::post('/candidates/store', [CandidateController::class, 'store'])->name('candidates.store');
+Route::get('/application-success/{id}', [CandidateController::class, 'success'])->name('application.success');
+
+// Staff dashboard routes (protected by auth middleware)
+// Staff dashboard routes (protected by auth middleware)
+Route::middleware(['auth'])->prefix('staff')->name('staff.')->group(function() {
+    // Candidate management
+    Route::prefix('candidates')->name('candidates.')->group(function() {
+        Route::get('/', [CandidateController::class, 'index'])->name('index');
+        Route::get('/{candidate}', [CandidateController::class, 'show'])->name('show');
+        
+        // Tags
+        Route::post('/{candidate}/add-tag', [CandidateController::class, 'addTag'])->name('add-tag');
+        Route::delete('/{candidate}/remove-tag/{tag}', [CandidateController::class, 'removeTag'])->name('remove-tag');
+        
+        // License verification
+        Route::post('/{candidate}/verify-license', [CandidateController::class, 'verifyLicense'])->name('verify-license');
+        
+        // Tests
+        Route::post('/{candidate}/schedule-test', [CandidateController::class, 'scheduleTest'])->name('schedule-test');
+        Route::post('/tests/{test}/record', [CandidateController::class, 'recordTestResult'])->name('tests.record');
+        
+        // Status updates
+        Route::patch('/{candidate}/update-status/{status}', [CandidateController::class, 'updateStatus'])->name('update-status');
+        
+        // Notes
+        Route::patch('/{candidate}/update-notes', [CandidateController::class, 'updateNotes'])->name('update-notes');
+    });
+    
+  
+
+    
+    // Tags management - using resource controller with staff prefix
+    Route::resource('tags', CandidateTagController::class)->names([
+        'index' => 'tags.index',
+        'create' => 'tags.create',
+        'store' => 'tags.store',
+        'edit' => 'tags.edit',
+        'update' => 'tags.update',
+        'destroy' => 'tags.destroy'
+    ]);
+
+
+
+});
+Route::prefix('staff')->name('staff.')->group(function () {
+    Route::post('/candidates/{candidate}/documents', [CandidateController::class, 'storeDocument'])
+        ->name('candidates.documents.store');
+        
+    Route::get('/candidates/{candidate}/documents/{document}/download', 
+        [CandidateController::class, 'downloadDocument'])
+        ->name('candidates.documents.download');
+        
+    Route::delete('/candidates/{candidate}/documents/{document}', 
+        [CandidateController::class, 'deleteDocument'])
+        ->name('candidates.documents.destroy');
+
+          Route::post('/tests/{test}/record', [CandidateController::class, 'recordTestResult'])
+        ->name('tests.record');
+});
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function() {
+    Route::prefix('candidates')->name('candidates.')->group(function() {
+        // Approval queue listing
+        Route::get('/', [AdminController::class, 'candidates'])->name('index');
+        Route::get('/approval-queue', [AdminController::class, 'candidates'])->name('approvalQueue');
+        
+        // Single candidate operations
+        Route::get('/{candidate}', [AdminController::class, 'reviewCandidate'])->name('show');
+        Route::get('/{candidate}/review', [AdminController::class, 'reviewCandidate'])->name('review');
+        
+        // Candidate status changes
+        Route::post('/{candidate}/approve', [AdminController::class, 'approveCandidate'])->name('approve');
+        Route::post('/{candidate}/reject', [AdminController::class, 'rejectCandidate'])->name('reject');
+    });
 });
 
 
-Route::prefix('employee')->middleware('auth')->group(function () {
-    Route::get('/onboarding', [EmployeeOnboardingController::class, 'index'])->name('employee.onboarding');
-
-    Route::post('/onboarding/complete/{task}', [EmployeeOnboardingController::class, 'completeTask'])->name('onboarding.complete');
-});;
-
-
-Route::middleware(['auth', 'employee'])->group(function () {
-    Route::get('/staff/onboarding', [OnboardingController::class, 'index'])->name('staff.onboarding');
-    Route::post('/staff/onboarding/{taskId}/complete', [OnboardingController::class, 'completeTask'])->name('onboarding.complete');
+// Staff Routes
+Route::middleware(['auth' ])->prefix('staff')->name('staff.')->group(function() {
+    // Dashboard
+    Route::get('/dashboard', [StaffDashboardController::class, 'index'])
+    ->name('dashboard');
+    
+   // Final Interviews Routes
+   Route::prefix('final-interviews')->name('final-interviews.')->group(function () {
+    Route::get('/', [FinalInterviewController::class, 'index'])->name('index');
+    Route::get('/select-candidate', [FinalInterviewController::class, 'selectCandidate'])->name('select-candidate');
+    Route::get('/create/{candidate}', [FinalInterviewController::class, 'create'])->name('create');
+    Route::post('/store/{candidate}', [FinalInterviewController::class, 'store'])->name('store');
+    Route::get('/{interview}', [FinalInterviewController::class, 'show'])->name('show');
+    Route::put('/{interview}/complete', [FinalInterviewController::class, 'complete'])->name('complete');
+});
 });
 
+// Admin Routes
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function() {
+    // Dashboard
+  Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    // Hiring Decisions
+    Route::get('/hiring-decisions', [HiringDecisionController::class, 'index'])->name('hiring-decisions.index');
+    Route::get('/hiring-decisions/create', [HiringDecisionController::class, 'create'])->name('hiring-decisions.create');
+    Route::post('/hiring-decisions', [HiringDecisionController::class, 'store'])->name('hiring-decisions.store');
+   
+    Route::get('/hiring-decisions/{decision}/edit', [HiringDecisionController::class, 'edit'])->name('hiring-decisions.edit');
+    Route::put('/hiring-decisions/{decision}', [HiringDecisionController::class, 'update'])->name('hiring-decisions.update');
+    Route::delete('/hiring-decisions/{decision}', [HiringDecisionController::class, 'destroy'])->name('hiring-decisions.destroy');
+    
+        
+    
+        Route::get('/hiring-decisions/ready', [HiringDecisionController::class, 'readyForHire'])
+        ->name('hiring-decisions.ready');
+   
+        
+        Route::get('hiring-decisions/{decision}', [HiringDecisionController::class, 'show'])
+        ->name('hiring-decisions.show');
+});
 
-
+// Employee Routes
+Route::middleware(['auth'])->prefix('employee')->name('employee.')->group(function() {
+    // Dashboard
+    Route::get('/dashboard', function () {
+        return view('employee.dashboard');
+    })->name('dashboard');
+    
+    // Onboarding
+    Route::get('/onboarding', [OnboardingController::class, 'dashboard'])
+        ->name('onboarding.dashboard');
+    
+    Route::post('/onboarding/documents', [OnboardingController::class, 'uploadDocument'])
+        ->name('onboarding.upload-document');
+    
+    Route::delete('/onboarding/documents/{document}', [OnboardingController::class, 'deleteDocument'])
+        ->name('onboarding.delete-document');
+    
+    Route::post('/onboarding/profile', [OnboardingController::class, 'updateProfile'])
+        ->name('onboarding.update-profile');
+    
+    Route::post('/onboarding/tasks/{task}/complete', [OnboardingController::class, 'completeTask'])
+        ->name('onboarding.complete-task');
+});

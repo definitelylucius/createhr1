@@ -143,11 +143,12 @@ public function showUploadForm()
 public function index()
 { $userId = Auth::id();
     // Fetch employees who are in onboarding
-    $employee = Employee::where('user_id', $userId)->first();
+     $employee = Employee::where('user_id', $userId)->first();
 
 
     return view('staff.onboarding.index', compact('employees'));
 }
+
 }
 
     

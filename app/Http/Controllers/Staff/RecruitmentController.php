@@ -171,23 +171,7 @@ class RecruitmentController extends Controller
 }
 
 
-public function handleInterviewForm($id, Request $request)
-{
-    // Retrieve the JobApplication by its ID
-    $application = JobApplication::find($id);
 
-    // Ensure the application exists
-    if (!$application) {
-        return back()->with('error', 'Application not found.');
-    }
-
-    // Handle interview result (update application status, etc.)
-    $application->interview_status = $request->input('interview_status'); // Example
-    $application->save();
-
-    // Redirect or return with a success message
-    return back()->with('success', 'Interview result submitted successfully!');
-}
 
 public function updateInterviewOutcome(Request $request, $applicationId)
 {
@@ -242,7 +226,9 @@ public function recommendApplicant($id)
 }
 
 
+
 }
+
 
 
     
