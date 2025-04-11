@@ -1,8 +1,7 @@
 <?php
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Services\LocalResumeParser;
-use Illuminate\Support\Str;
-use Smalot\PdfParser\Parser;
+
+
+
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProfileController;
@@ -14,41 +13,15 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApplicationController;
-use App\Http\Controllers\Staff\ApplicantsController;
-use App\Http\Controllers\Staff\TaskController; // ✅ Make sure this is correct
 use App\Http\Controllers\Staff\OnboardingController;
-use App\Http\Controllers\Staff\RecruitmentController;
-use App\Http\Controllers\Staff\ScheduleController;
 use App\Http\Controllers\Staff\StaffDashboardController;
-use App\Http\Controllers\Admin\AdminRecruitmentController;
-use App\Http\Controllers\Admin\AdminReviewController;
-use App\Mail\InterviewInvitation;
-use Illuminate\Support\Facades\Mail;
-use App\Models\JobApplication;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Employee\EmployeeProfileController;
-
-use App\Http\Controllers\Admin\AdminUpdateEmployeeController;
-use App\Http\Controllers\Employee\VideoProgressController;
-use App\Http\Controllers\EmployeeController;
-
-use App\Http\Controllers\EmployeeNewhiredController;
 use App\Http\Controllers\DocumentGenerateController;
-use App\Http\Controllers\EmployeeOnboardingController;
-
-
 use App\Http\Controllers\Admin\AdminDashboardController;
-
-
 use App\Http\Controllers\CandidateController;
-
 use App\Http\Controllers\CandidateTagController;
-
 use App\Http\Controllers\Staff\FinalInterviewController;
 use App\Http\Controllers\Admin\HiringDecisionController;
-
-
-
+use App\Http\Controllers\TwoFactorController;
 
 
 
@@ -219,75 +192,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-//Staff
-
-
-# ********************************************
-#   STAFF CANDIDATESCREENING   
-# ********************************************
-
-
-Route::get('/storage-debug', function() {
-    $testFile = 'test_'.time().'.txt';
-    Storage::disk('resumes')->put($testFile, 'test content');
-    
-    return [
-        'config_path' => config('filesystems.disks.resumes.root'),
-        'actual_path' => Storage::disk('resumes')->path($testFile),
-        'file_exists' => file_exists(Storage::disk('resumes')->path($testFile)),
-        'directory_listing' => scandir(config('filesystems.disks.resumes.root'))
-    ];
-});
 
 
 
-Route::get('/track', [ApplicantsController::class, 'trackApplications'])
-    ->name('staff.applicants.track')
-    ->middleware('auth');
-
-
-    Route::get('/view', [ApplicantsController::class, 'view'])->name('staff.applicants.view');
-
-
-Route::get('/staff/applicants/view', [ApplicantsController::class, 'view'])
-    ->name('staff.applicants.view');
-
-    Route::prefix('staff/onboarding')->group(function () {
-        Route::get('/orientation', [OnboardingController::class, 'orientation'])->name('staff.onboarding.orientation');
-        Route::get('/documents', [OnboardingController::class, 'documents'])->name('staff.onboarding.documents');
-        Route::get('/training', [OnboardingController::class, 'training'])->name('staff.onboarding.training');
-    });
-
-    Route::prefix('staff/tasks')->group(function () {
-        Route::get('/assigned', [TaskController::class, 'assignedTasks'])->name('staff.tasks.assigned');
-        Route::get('/pending', [TaskController::class, 'pendingTasks'])->name('staff.tasks.pending');
-        Route::get('/completed', [TaskController::class, 'completedTasks'])->name('staff.tasks.completed');
-
-    });
-
-    Route::prefix('staff/recruitment')->group(function () {
-        Route::get('/interview', [RecruitmentController::class, 'interview'])->name('staff.recruitment.interview');
-        Route::get('/documents', [RecruitmentController::class, 'documents'])->name('staff.recruitment.documents');
-        Route::get('/feedback', [RecruitmentController::class, 'feedback'])->name('staff.recruitment.feedback');
-    });
-
-    Route::get('/staff/schedule', [ScheduleController::class, 'index'])->name('staff.schedule');
-
-
-    Route::post('/apply/{job}', [ApplicantsController::class, 'submitApplication'])
-    ->name('submit.application')
-    ->middleware('auth');
-
-  
-    Route::middleware(['auth', RoleMiddleware::class . ':staff'])->group(function () {
-        Route::prefix('staff/applicants')->group(function () {
-            Route::get('/track', [ApplicantsController::class, 'trackApplications'])
-                ->name('staff.applicants.track');
-        
-            Route::get('/view', [ApplicantsController::class, 'index'])
-                ->name('staff.applicants.view');
-        });
-    });
 
     Route::middleware(['auth', RoleMiddleware::class . ':staff'])->group(function () {
 
@@ -298,324 +205,9 @@ Route::get('/staff/applicants/view', [ApplicantsController::class, 'view'])
     });
     
 
-    
-// ✅ STAFF: Scan & Mark Applicants
-Route::get('/staff/applicants/feedback', [ApplicationController::class, 'showScanPage'])->name('staff.applicants.scan');
-Route::post('/staff/applicants/update-status', [ApplicationController::class, 'updateStatus'])->name('staff.updateStatus');
-
-// ✅ ADMIN: Review Applicants
-Route::get('/admin/applicants/review', [ApplicationController::class, 'viewApplications'])->name('admin.applicants.review');
-Route::post('/admin/applicants/{id}/schedule-interview', [ApplicationController::class, 'scheduleInterview'])->name('admin.scheduleInterview');
-
-// ✅ STAFF: Mark Interview as Completed
-Route::get('/staff/applicants/interview', [ApplicationController::class, 'showInterviewPage'])->name('staff.applicants.interview');
-Route::post('/staff/applicants/{id}/complete-interview', [ApplicationController::class, 'completeInterview'])->name('staff.completeInterview');
-
-// ✅ STAFF: Mark Applicant as Hired
-Route::get('/staff/applicants/finalize', [ApplicationController::class, 'showFinalizePage'])->name('staff.applicants.finalize');
-Route::post('/staff/applicants/{id}/mark-hired', [ApplicationController::class, 'markHired'])->name('staff.markHired');
-
-// ✅ ADMIN: Finalize Hiring
-Route::get('/admin/applicants/finalize', [ApplicationController::class, 'showFinalizeHiringPage'])->name('admin.applicants.finalize');
-Route::post('/admin/applicants/{id}/finalize-hiring', [ApplicationController::class, 'finalizeHiring'])->name('admin.finalizeHiring');
-
-Route::post('/applications/{id}/send-interview', [ApplicationController::class, 'sendInterviewInvitation'])->name('applications.send-interview');
-
-Route::post('/staff/applications/{id}/interview', 
-    [RecruitmentController::class, 'completeInterview'])->name('staff.completeInterview');
-
-
-    Route::get('/staff/interview', [RecruitmentController::class, 'interview'])->name('staff.interview');
- 
-    // Ensure the user is authenticated
-    Route::get('/admin/applicants/{id}', [RecruitmentController::class, 'show'])->name('admin.applicants.show');
-
-
-    Route::post('/staff/completeInterview/{id}', [RecruitmentController::class, 'completeInterview'])->name('staff.completeInterview');
-    Route::get('/staff/recruitment/feedback', [RecruitmentController::class, 'feedback'])
-    ->name('staff.recruitment.feedback');
-
-    
-   
-    //ADMIN REVIEW
-    Route::middleware(['auth', RoleMiddleware::class . ':admin'])->group(function () {
-        // Route to review applications
-        Route::get('/admin/applicants/review', [AdminReviewController::class, 'index'])
-            ->name('admin.applicants.review');
-        
-        // Route to update a specific application status
-        Route::put('/admin/applicants/review/{applicationId}', [AdminReviewController::class, 'updateApplicationReviewer'])
-            ->name('admin.applicants.updateReview');
-    });
-    Route::middleware(['auth', ])->prefix('admin')->group(function () {
-        Route::get('/review-applications', [AdminReviewController::class, 'index'])->name('admin.applications.review');
-        Route::put('/applications/{id}/update-status', [AdminReviewController::class, 'updateStatus'])->name('admin.applications.updateStatus');
-    });
-
-    Route::put('/admin/applications/updateStatus/{id}', [AdminReviewController::class, 'updateStatus'])->name('admin.applications.updateStatus');
-    Route::get('staff/recruitment/interview/{id}/send-email', [RecruitmentController::class, 'sendInterviewEmail'])
-    ->name('staff.sendInterviewEmail');
-
-    Route::post('/staff/applicant/{id}/recommend', [RecruitmentController::class, 'updateInterviewOutcome'])->name('staff.recommendApplicant');
-
-    Route::get('/admin/recruitment/hired', [AdminUpdateEmployeeController::class, 'hired'])->name('admin.recruitment.hired');
-    
-
-    Route::put('/staff/recruitment/update-status/{applicationId}', [RecruitmentController::class, 'updateApplicationStatusByRequest'])
-    ->name('staff.applications.update-status');
-
-    Route::middleware(['auth'])->prefix('staff')->group(function () { 
-        Route::post('/recruitment/interview/{applicantIds}}/store', [RecruitmentController::class, 'storeInterviewResult'])
-             ->name('staff.recruitment.storeInterviewResult');
-    
-        Route::post('/recruitment/update-interview-outcome/{id}', [RecruitmentController::class, 'updateInterviewOutcome'])
-             ->name('staff.updateInterviewOutcome');
-    });;
-
-
-
-    Route::get('/admin/review-applications', [AdminReviewController::class, 'index'])->name('admin.applications.review');
-
-Route::get('/applications/{id}', [AdminRecruitmentController::class, 'showApplication'])
-     ->name('applications.show');
-
      Route::middleware(['auth'])->group(function () {
         Route::get('/staff/dashboard', [StaffDashboardController::class, 'index'])->name('staff.dashboard');
     });
-    Route::prefix('admin')->middleware('auth')->group(function () {
-        Route::get('/review-applications', [AdminReviewController::class, 'index'])->name('admin.applications.review');
-    });
-    Route::post('/staff/updateInterviewOutcome/{applicationId}', [RecruitmentController::class, 'updateInterviewOutcome'])
-    ->name('staff.updateInterviewOutcome');
-
-//ADMIN UPDATE STATUSS
-
-
-
-
-
-
-Route::get('/admin/applicants/review', [AdminRecruitmentController::class, 'index'])->name('admin.applicants.review');
-
-
-
-Route::put('/admin/applications/{id}/status', [AdminRecruitmentController::class, 'updateApplicationStatus'])
-    ->name('admin.applications.updateStatus');
-
-    Route::put('/admin/applications/{id}/status', [AdminRecruitmentController::class, 'updateApplicationStatus'])->name('admin.applications.updateStatus');
-
-
-  
-
-    Route::get('/admin/applicants/review', [AdminReviewController::class, 'index'])->name('admin.applicants.review');
-
-    Route::get('/admin/recruitment/hired', [AdminController::class, 'showHiredApplicants'])->name('admin.recruitment.hired');
-
-    Route::get('admin/recruitment/hired', [AdminUpdateEmployeeController::class, 'showHiredApplicants'])->name('admin.recruitment.hired');
-    Route::post('/admin/applicants/hire/{applicantIds}', [AdminUpdateEmployeeController::class, 'updateToEmployees'])->name('admin.updateToEmployees');
-
-
-    //EMAIL
-
-    Route::post('/staff/sendInterviewEmail/{id}', function (Request $request, $id) {
-        $request->validate([
-            'subject' => 'required|string',
-            'message' => 'required|string',
-        ]);
-    
-        $application = JobApplication::findOrFail($id);
-    
-        Mail::to($application->user->email)->send(new InterviewInvitation(
-            $application,
-            $request->input('subject'),
-            $request->input('message')
-        ));
-    
-        return back()->with('success', 'Interview invitation sent!');
-    })->name('staff.sendInterviewEmail');
-
-    
-    
-
-    Route::get('/staff/recruitment/interviews', [RecruitmentController::class, 'showApplicants'])->name('recruiter.applicants');
-    Route::post('/staff/recruitment/interview/{applicationId}/store', [RecruitmentController::class, 'storeInterviewResult'])
-    ->name('staff.recruitment.storeInterviewResult');
-
-    Route::post('/recruitment/interview/{id}', [RecruitmentController::class, 'sendInterviewEmail']);
-
-
-    // Define the route with the POST method
-
-   // ✅ Fix duplicate "sendInterviewEmail" routes (keep only one)
-Route::post('/staff/sendInterviewEmail/{id}', [RecruitmentController::class, 'sendInterviewEmail'])
-->name('staff.sendInterviewEmail');
-
-Route::post('/recruitment/interview/{id}', [RecruitmentController::class, 'sendInterviewEmail']);
-Route::post('/staff/recruitment/interview/{id}', [RecruitmentController::class, 'sendInterviewEmail']);
-
-// ✅ Fix duplicate "updateInterviewOutcome" routes (keep only one)
-Route::post('/staff/updateInterviewOutcome/{applicationId}', [RecruitmentController::class, 'updateInterviewOutcome'])
-->name('staff.updateInterviewOutcome');
-
-// ✅ Hiring routes (ensure unique names)
-Route::get('admin/recruitment/{id}/hire', [AdminRecruitmentController::class, 'showHireForm'])
-->name('admin.recruitment.hire');
-
-Route::post('admin/recruitment/{id}/hire', [AdminRecruitmentController::class, 'hire'])
-->name('admin.recruitment.hire.submit');
-
-// ✅ Fix conflicting "admin.applicants.hired" routes
-
-
-Route::get('/admin/recruitment/hired', [AdminRecruitmentController::class, 'hiredApplicants'])
-    ->name('admin.applicants.hired');
-   
-
-
-    Route::put('/admin/applications/{id}/updateEmployee', [AdminUpdateEmployeeController::class, 'updateEmployee'])
-    ->name('admin.applications.updateEmployee');
-    
-    Route::put('/staff/applications/{applicationId}/update-status', [RecruitmentController::class, 'updateApplicationStatusByRequest'])
-    ->name('staff.applications.update-status');
-
-    Route::post('/admin/notifications/read', [AdminController::class, 'markNotificationsAsRead'])->name('admin.notifications.markAsRead');
-
-
-//EMPLOYEE
-
-
-Route::put('/staff/applications/{application}/update-status', [RecruitmentController::class, 'updateStatus'])->name('staff.applications.update-status');
-
-
-Route::middleware('auth')->get('/employee/profile', [EmployeeProfileController::class, 'showProfile'])->name('employee.profile');
-
-Route::put('employee/profile/{id}', [EmployeeProfileController::class, 'update'])->name('employee.profile.update');
-
-Route::post('/admin/update-employee/{applicantId}', [AdminUpdateEmployeeController::class, 'updateToEmployees'])->name('admin.updateEmployee');
-
-    Route::post('/staff/updateToEmployee/{applicationId}', [RecruitmentController::class, 'updateToEmployee'])
-    ->name('staff.updateToEmployee');
-   
-    Route::get('/admin/hired-applicants', [AdminUpdateEmployeeController::class, 'showRecommendedApplicants'])
-    ->name('admin.hiredApplicants');
-
-Route::put('/admin/hire-applicant/{id}', [AdminUpdateEmployeeController::class, 'updateToEmployees'])
-    ->name('employee.profile.update');
-
-// Route to show the profile
-Route::get('employee/{id}/profile', [EmployeeProfileController::class, 'showProfile'])->name('employee.profile.show');
-// Route to update the profile
-Route::put('employee/{id}/profile', [EmployeeProfileController::class, 'update'])->name('employee.profile.update');
-Route::get('employee/{id}/profile', [EmployeeProfileController::class, 'showProfile'])->name('employee.profile.show');
-
-
-
-//NOTIFICATION 
-Route::get('/notifications', function (Request $request) {
-    $user = auth()->user();
-    return response()->json($user->unreadNotifications->map(function ($notification) {
-        return [
-            'id' => $notification->id,
-            'message' => $notification->data['message'],
-            'url' => $notification->data['url'],
-        ];
-    }));
-})->middleware('auth');
-
-Route::post('/notifications/mark-all-as-read', function () {
-    Auth::user()->unreadNotifications->markAsRead();
-    return response()->json(['message' => 'All notifications marked as read']);
-})->middleware('auth');
-
-// Clear all notifications
-Route::delete('/notifications/clear-all', function () {
-    Auth::user()->notifications()->delete();
-    return response()->json(['message' => 'All notifications cleared']);
-})->middleware('auth');
-
-
-
-Route::get('/admin/applicants/{id}', [AdminController::class, 'show'])->name('admin.applicant.show');
-
-
-Route::get('/admin/recruitment/hired', [AdminUpdateEmployeeController::class, 'showHiredApplicants'])
-    ->name('admin.applicants.hired'); 
-
-
-    Route::post('/admin/applicants/hire/{applicantId}', [AdminUpdateEmployeeController::class, 'updateToEmployees'])
-    ->name('admin.updateToEmployees');
-
-
- // STAFF ONBOARDING
-Route::prefix('staff')->middleware('auth')->group(function () {
-    Route::get('/onboarding', [OnboardingController::class, 'index'])->name('staff.onboarding');
-    Route::get('/onboarding/documents', [OnboardingController::class, 'documents'])->name('staff.onboarding.documents');
-    
-    // Changed route name here
-
-    Route::get('/onboarding/training', [OnboardingController::class, 'training'])->name('staff.onboarding.training');
-
-    // Upload Video Route
- 
-Route::get('/employee/orientation', [OnboardingController::class, 'employeeOrientation'])->name('staff.orientation');
-Route::get('/upload-orientation-video', [OnboardingController::class, 'showForm'])->name('videos.uploadForm');
-
-
-Route::post('/upload-orientation-video', [OnboardingController::class, 'upload'])->name('videos.upload'); // Handle form submission
-
-
-Route::get('/new-hire-orientation', [OnboardingController::class, 'newHireOrientation'])->name('new.hire.orientation');
-Route::get('/onboarding/upload', [OnboardingController::class, 'showForm']);
-Route::get('/upload-video', [OnboardingController::class, 'showUploadForm'])->name('videos.upload.form');
-
-
-
-// Video Upload
-Route::get('/staff/upload-video', [OnboardingController::class, 'showUploadForm'])->name('videos.upload.form');
-Route::post('/staff/upload-video', [OnboardingController::class, 'upload'])->name('videos.upload');
-
-// Employee Orientation
-Route::get('/employee/orientation/{employeeId?}', [OnboardingController::class, 'showEmployeeOrientation'])->name('employee.orientation');
-
-
-});
-
-Route::get('/new-hire-orientation', function () {
-    return view('staff.onboarding.orientation'); // Correct path
-})->name('new.hire.orientation');
-
-
-
-Route::post('/upload-video', [EmployeeController::class, 'uploadVideo'])->name('staff.onboarding.upload-video');
-
-
-//STAFF ONBOARDING DOCUMENTS
-
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/staff/onboarding/documents', [OnboardingController::class, 'documentCollectionView'])->name('staff.documents');
-    Route::post('/staff/assign-document-task', [OnboardingController::class, 'assignDocumentTask'])->name('staff.assignDocumentTask');
-
-    Route::get('/employee/onboarding', [OnboardingController::class, 'employeeView'])->name('employee.onboarding');
-    Route::post('/employee/submit-document', [OnboardingController::class, 'submitDocument'])->name('employee.submitDocument');
-    
-});
-
-Route::prefix('staff')->name('staff.')->group(function () {
-    Route::prefix('onboarding')->name('onboarding.')->group(function () {
-        Route::get('/documents', [OnboardingController::class, 'documentCollectionView'])->name('documents');
-    });
-});
-
-
-Route::post('/onboarding/upload-documents', [OnboardingController::class, 'uploadDocuments'])
-    ->name('onboarding.uploadDocuments');
-    Route::post('/update-task-status', [OnboardingController::class, 'updateTaskStatus'])->name('updateTaskStatus');
-    Route::post('/onboarding/update-progress', [OnboardingController::class, 'updateProgress'])->name('onboarding.updateProgress');
- 
-    Route::post('/assign-task', [OnboardingController::class, 'assignTask'])->name('staff.assignTask');
-
-
 
 
 
@@ -779,3 +371,5 @@ Route::middleware(['auth'])->prefix('employee')->name('employee.')->group(functi
     Route::post('/onboarding/tasks/{task}/complete', [OnboardingController::class, 'completeTask'])
         ->name('onboarding.complete-task');
 });
+
+

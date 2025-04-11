@@ -3,89 +3,115 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
-use App\Models\Job;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
-
+use App\Models\Job;
+use App\Notifications\SendTwoFactorCode;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
-    public function create(): View
+    public function create()
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    
-        /**
-         * Handle an authentication attempt.
-         */
-        public function store(Request $request)
-        {
-            // Validate login credentials
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
-    
-            // Attempt to log the user in
-            if (Auth::attempt($request->only('email', 'password'))) {
-                $request->session()->regenerate();
-                return $this->redirectToDashboard(Auth::user());
-            }
-    
-            return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
-        }
-    
-        /**
-         * Redirect user to their respective dashboard.
-         */
-        protected function redirectToDashboard($user)
-        {
-            switch ($user->role) {
-                case 'superadmin':
-                    return redirect()->route('superadmin.dashboard');
-                case 'admin':
-                    return redirect()->route('admin.dashboard');
-                case 'staff':
-                    return redirect()->route('staff.dashboard');
-                case 'employee':
-                    return redirect()->route('employee.dashboard');
-                case 'applicant':
-                    default:
-                    $jobs = Job::all(); // Fetch all jobs from the database
-                    return view('welcome', compact('jobs')); // Pass jobs to the welcome view
-            }; // Show the welcome.blade.php view
+    public function store(Request $request)
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    // Validate without logging in
+    if (!Auth::validate($credentials)) {
+        return back()->withErrors(['email' => 'Invalid credentials']);
+    }
+
+    $user = User::where('email', $credentials['email'])->first();
+
+    if ($user->hasTwoFactorEnabled()) {
+        $user->generateTwoFactorCode();
+        $user->notify(new SendTwoFactorCode());
+        
+        // Set all required session variables
+        $request->session()->put([
+            '2fa_user_id' => $user->id,
+            '2fa_remember' => $request->filled('remember'),
+            '2fa_login_attempt' => true,
+            '2fa_verified' => false // Explicitly false
+        ]);
+
+        // Partial logout - maintains our session
+        Auth::guard('web')->logout();
+        
+        return redirect()->route('two-factor.challenge');
+    }
+
+    // Direct login for non-2FA users
+    Auth::login($user, $request->filled('remember'));
+    return $this->redirectToDashboard($user);
 }
-    
-        /**
-         * Log the user out.
-         */
-        public function destroy(Request $request)
-        {
-            $guards = ['superadmin', 'admin', 'staff', 'employee', 'applicant', 'web'];
-        
-            foreach ($guards as $guard) {
-                if (Auth::guard($guard)->check()) {
-                    Auth::guard($guard)->logout();
-                }
-            }
-        
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        
-            return redirect('/'); // Redirect to homepage or login page
+
+    public function showTwoFactorForm(Request $request)
+    {
+        if (!$request->session()->has('2fa_user_id')) {
+            Log::warning('Unauthorized 2FA access attempt');
+            return redirect()->route('login');
         }
 
-      
+        return view('auth.two-factor-challenge');
     }
+
+    public function verifyTwoFactor(Request $request)
+    {
+        $request->validate(['code' => 'required|digits:6']);
+    
+        // Validate session state
+        abort_unless(
+            $request->session()->has(['2fa_user_id', '2fa_login_attempt']),
+            403,
+            'Invalid authentication state'
+        );
+    
+        $user = User::findOrFail($request->session()->get('2fa_user_id'));
+    
+        if (!$user->verifyTwoFactorCode($request->code)) {
+            return back()->withErrors(['code' => 'Invalid verification code']);
+        }
+    
+        // Finalize authentication
+        Auth::login($user, $request->session()->get('2fa_remember'));
+        $request->session()->put('2fa_verified', true);
+        $request->session()->forget(['2fa_login_attempt', '2fa_user_id']);
+        $user->resetTwoFactorCode();
+    
+        return $this->redirectToDashboard($user);
+    }
+    protected function redirectToDashboard($user)
+    {
+        $route = match($user->role) {
+            'superadmin' => 'superadmin.dashboard',
+            'admin' => 'admin.dashboard',
+            'staff' => 'staff.dashboard',
+            'employee' => 'employee.dashboard',
+            default => null
+        };
+
+        if ($route) {
+            return redirect()->route($route);
+        }
+
+        $jobs = Job::all();
+        return view('welcome', compact('jobs'));
+    }
+
+    public function destroy(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
+    }
+}

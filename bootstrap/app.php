@@ -2,8 +2,6 @@
 
 
 
-
-
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,13 +13,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Global Middleware
+        $middleware->alias([
+            '2fa' => \App\Http\Middleware\EnsureTwoFactorIsVerified::class,
+        ]);
+        
+        // Optional: Apply globally to web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureTwoFactorIsVerified::class,
+        ]);
    
  
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
+
+
+   
 
 
     
