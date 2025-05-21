@@ -41,20 +41,40 @@ return [
             'visibility' => 'public',
         ],
 
-'resumes' => [
-    'driver' => 'local',
-    'root' => storage_path('app/public/resumes'), // Standard public location
-    'url' => env('APP_URL').'/storage/resumes',
-    'visibility' => 'public',
-],
 
-'candidate_documents' => [
-    'driver' => 'local',
-    'root' => storage_path('app/candidate_documents'),
-    'url' => env('APP_URL') . '/storage/candidate_documents',
-    'visibility' => 'public',
-],
 
+        'candidate_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/candidate_documents'),
+        ],
+        
+        'pre_employment' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/pre_employment'),
+            'url' => env('APP_URL').'/storage/pre_employment',
+            'visibility' => 'public',
+        ],
+        
+        'offer_letters' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/offer_letters'),
+            'url' => env('APP_URL').'/storage/offer_letters',
+            'visibility' => 'public',
+        ],
+        
+        'signatures' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/signatures'),
+            'url' => env('APP_URL').'/storage/signatures',
+            'visibility' => 'public',
+        ],
+        
+        'onboarding' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/onboarding'),
+            'url' => env('APP_URL').'/storage/onboarding',
+            'visibility' => 'public',
+        ],
 
     
 

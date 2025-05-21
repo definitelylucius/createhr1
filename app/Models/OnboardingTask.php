@@ -10,16 +10,31 @@ class OnboardingTask extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'candidate_id',
+        'title',
         'description',
-        'days_before_due',
-        'is_required'
+        'type',
+        'due_date',
+        'completed_at',
+        'status',
+        'assigned_to',
+        'completed_by',
+        'notes'
     ];
 
-    public function employees()
+
+    public function candidate()
     {
-        return $this->belongsToMany(User::class, 'employee_onboarding')
-            ->withPivot(['status', 'due_date', 'completed_at', 'notes'])
-            ->withTimestamps();
+        return $this->belongsTo(Candidate::class);
+    }
+
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 }

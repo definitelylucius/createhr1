@@ -34,17 +34,20 @@ class SuperAdminController extends Controller
     
 
     // Store new user
+    // Store new user
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,staff,employee,applicant',
         ]);
 
         User::create([
-            'name' => $request->name,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role
@@ -59,4 +62,43 @@ class SuperAdminController extends Controller
         User::findOrFail($id)->delete();
         return redirect()->route('superadmin.dashboard')->with('success', 'User deleted successfully.');
     }
+
+    public function editUser($id)
+{
+    $user = User::findOrFail($id);
+    return view('superadmin.edit', compact('user'));
+}
+
+/**
+ * Update the specified user
+ */
+public function updateUser(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+    
+    $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+        'role' => 'required|in:admin,staff,employee,applicant',
+        'password' => 'nullable|string|min:6',
+    ]);
+
+    $updateData = [
+        'first_name' => $request->first_name,
+        'last_name' => $request->last_name,
+        'email' => $request->email,
+        'role' => $request->role,
+    ];
+
+    // Only update password if provided
+    if ($request->filled('password')) {
+        $updateData['password'] = Hash::make($request->password);
+    }
+
+    $user->update($updateData);
+
+    return redirect()->route('superadmin.dashboard')
+        ->with('success', 'User updated successfully.');
+}
 }

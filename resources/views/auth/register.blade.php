@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @vite('resources/css/app.css')
+   
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,12 +15,14 @@
 </head>
 
 <body>
-    <div class="h-screen flex flex-col md:flex-row bg-gray-100">
-        
-        <!-- Left Side - Bus Background -->
-        <div class="hidden lg:block lg:w-3/5 h-screen">
-            <div class="bus-background bg-cover w-full h-full rounded-r-3xl"></div>
+<div class="h-screen flex flex-col md:flex-row bg-gray-100">
+    <!-- Left Side - Background Image -->
+    <div class="hidden lg:block lg:w-3/5 h-screen">
+        <div 
+            class="bg-cover bg-center w-full h-full rounded-r-3xl" 
+            style="background-image: url('/imagess/bus-background.jpg');">
         </div>
+    </div>
 
         <!-- Right Side - Register Form -->
         <div class="flex flex-col justify-center py-8 w-full md:w-1/2 lg:w-2/5 items-center bg-white shadow-lg">

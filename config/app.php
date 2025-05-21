@@ -152,7 +152,11 @@ return [
     Illuminate\Validation\ValidationServiceProvider::class,
     Illuminate\View\ViewServiceProvider::class,
     Laravel\Sanctum\SanctumServiceProvider::class, // If using Sanctum
+
+    App\Providers\ViewServiceProvider::class,
 ]
+
+
 
 
     

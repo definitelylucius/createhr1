@@ -47,18 +47,41 @@
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Name -->
+                        <!-- First Name -->
                         <div>
-                            <x-input-label for="name" :value="__('Name')" />
-                            <x-text-input id="name" class="input input-bordered w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                            <x-input-label for="first_name" :value="__('First Name')" />
+                            <x-text-input id="first_name" class="input input-bordered w-full" type="text" name="first_name" :value="old('first_name')" required autofocus autocomplete="given-name" />
+                            <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                         </div>
 
+                        <!-- Last Name -->
+                        <div>
+                            <x-input-label for="last_name" :value="__('Last Name')" />
+                            <x-text-input id="last_name" class="input input-bordered w-full" type="text" name="last_name" :value="old('last_name')" required autocomplete="family-name" />
+                            <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <!-- Email -->
                         <div>
                             <x-input-label for="email" :value="__('Email')" />
                             <x-text-input id="email" class="input input-bordered w-full" type="email" name="email" :value="old('email')" required autocomplete="email" />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+
+                        <!-- Role Selection -->
+                        <div>
+                            <x-input-label for="role" :value="__('Role')" />
+                            <select id="role" name="role" class="select select-bordered w-full">
+                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                                <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
+                                <option value="applicant" {{ old('role') == 'applicant' ? 'selected' : '' }}>Applicant</option>
+                            </select>
+                            @error('role')
+                                <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -78,20 +101,6 @@
                         </div>
                     </div>
 
-                    <!-- Role Selection -->
-                    <div class="mt-4">
-                        <x-input-label for="role" :value="__('Role')" />
-                        <select id="role" name="role" class="select select-bordered w-full">
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
-                            <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
-                            <option value="applicant" {{ old('role') == 'applicant' ? 'selected' : '' }}>Applicant</option>
-                        </select>
-                        @error('role')
-                            <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <!-- Submit Button -->
                     <div class="mt-6">
                         <button type="submit" class="btn btn-primary w-full">
@@ -108,7 +117,7 @@
                     <table class="table table-zebra w-full rounded-lg border border-gray-200 shadow-md">
                         <thead class="bg-gradient-to-r from-blue-500 to-blue-700 text-white text-md">
                             <tr>
-                                <th class="py-3 px-6 text-left">Username</th>
+                                <th class="py-3 px-6 text-left">Name</th>
                                 <th class="py-3 px-6 text-left">Email</th>
                                 <th class="py-3 px-6 text-left">Role</th>
                                 <th class="py-3 px-6 text-left">Registered At</th>
@@ -123,7 +132,7 @@
                                                 <img src="https://i.pravatar.cc/100?img={{ $loop->index }}" alt="User Avatar">
                                             </div>
                                         </div>
-                                        <span>{{ $user->name }}</span>
+                                        <span>{{ $user->first_name }} {{ $user->last_name }}</span>
                                     </td>
                                     <td class="py-4 px-6">{{ $user->email }}</td>
                                     <td class="py-4 px-6">
@@ -142,10 +151,7 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
-
 </body>
 </html>
-

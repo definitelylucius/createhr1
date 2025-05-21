@@ -5,94 +5,245 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-
-
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobApplication extends Model
 {
     use HasFactory;
 
-    protected $table = 'job_applications';
     protected $fillable = [
-        'user_id', 'job_id', 'name', 'email', 'resume', 'status', 'interview_date',
-        'interview_status', 'application_status', 'reviewed_by', 'employee_status',
-        'skills', 'cdl_mentioned', 'experience_summary' // Added these
+        'user_id',
+        'job_id',
+        'firstname',
+        'lastname',
+        'email',
+        'phone',
+        'address',
+        'resume_path',
+        'status',
+        'current_stage'
     ];
 
-    protected $casts = [
-        'interview_date' => 'datetime',
-        'application_status' => 'string',
-        'status' => 'string',
-        'experience_summary' => 'array', // Add this for JSON casting
-        'cdl_mentioned' => 'boolean' // Add this for boolean casting
-    ];
+    // Application Stages
+    const STATUS_SUBMITTED = 'submitted';
+    public const STATUS_APPLIED = 'applied';
+    
+    // Interview Stages
+    public const STATUS_INITIAL_INTERVIEW_SCHEDULED = 'initial_interview_scheduled';
+    public const STATUS_INITIAL_INTERVIEW_COMPLETED = 'initial_interview_completed';
+    public const STATUS_INITIAL_INTERVIEW_PASSED = 'initial_interview_passed';
+    public const STATUS_INITIAL_INTERVIEW_FAILED = 'initial_interview_failed';
+    
+    // Demo Stages
+    public const STATUS_DEMO_SCHEDULED = 'demo_scheduled';
+    public const STATUS_DEMO_COMPLETED = 'demo_completed';
+    public const STATUS_DEMO_PASSED = 'demo_passed';
+    public const STATUS_DEMO_FAILED = 'demo_failed';
+    
+    // Exam Stages
+    public const STATUS_EXAM_SCHEDULED = 'exam_scheduled';
+    public const STATUS_EXAM_COMPLETED = 'exam_completed';
+    public const STATUS_EXAM_PASSED = 'exam_passed';
+    public const STATUS_EXAM_FAILED = 'exam_failed';
+    
+    // Final Interview Stages
+    public const STATUS_FINAL_INTERVIEW_SCHEDULED = 'final_interview_scheduled';
+    public const STATUS_FINAL_INTERVIEW_COMPLETED = 'final_interview_completed';
+    public const STATUS_FINAL_INTERVIEW_PASSED = 'final_interview_passed';
+    public const STATUS_FINAL_INTERVIEW_FAILED = 'final_interview_failed';
 
-    // Define application process statuses
-    public const APPLICATION_STATUS_PENDING = 'pending_review';
-    public const APPLICATION_STATUS_ADMIN_REVIEW = 'for_admin_review';
-    public const APPLICATION_STATUS_REJECTED = 'rejected';
+    // Offer Stages
+    public const STATUS_OFFER_PENDING = 'offer_pending';
+    public const STATUS_OFFER_SENT = 'offer_sent';
+    public const STATUS_OFFER_ACCEPTED = 'offer_accepted';
+    public const STATUS_OFFER_DECLINED = 'offer_declined';
+    public const STATUS_OFFER_EXPIRED = 'offer_expired';
+    public const STATUS_OFFER_RETRACTED = 'offer_retracted';
 
-    // Define hiring stages statuses
-    public const STATUS_QUALIFIED = 'qualified';
-    public const STATUS_INTERVIEWED = 'interviewed';
+    // Pre-employment Stages
+    public const STATUS_PRE_EMPLOYMENT = 'pre_employment';
+    public const STATUS_PRE_EMPLOYMENT_DOCUMENTS = 'pre_employment_documents';
+    public const STATUS_PRE_EMPLOYMENT_INITIATED = 'pre_employment_initiated';
+    public const STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED = 'pre_employment_docs_requested';
+    public const STATUS_PRE_EMPLOYMENT_DOCS_SUBMITTED = 'pre_employment_docs_submitted';
+    public const STATUS_PRE_EMPLOYMENT_VERIFICATION = 'pre_employment_verification';
+    public const STATUS_PRE_EMPLOYMENT_COMPLETED = 'pre_employment_completed';
+
+    // Onboarding & Final Stages
+    public const STATUS_ONBOARDING = 'onboarding';
+    public const STATUS_ONBOARDING_INITIATED = 'onboarding_initiated';
+    public const STATUS_ONBOARDING_COMPLETED = 'onboarding_completed';
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACTIVE = 'active';
     public const STATUS_HIRED = 'hired';
     public const STATUS_REJECTED = 'rejected';
 
-    const STATUS_INTERVIEW_SCHEDULED = 'interview_scheduled';
-   
-    protected $primaryKey = 'id'; // default
-
-    
-    public function getMlPredictionAttribute()
+    // Status groups for easy reference
+    public static function statusGroups(): array
     {
-        return $this->experience_summary['ml_results']['prediction'] ?? null;
+        return [
+            'application' => [
+                self::STATUS_SUBMITTED,
+                self::STATUS_APPLIED,
+            ],
+            'interview' => [
+                self::STATUS_INITIAL_INTERVIEW_SCHEDULED,
+                self::STATUS_INITIAL_INTERVIEW_COMPLETED,
+                self::STATUS_INITIAL_INTERVIEW_PASSED,
+                self::STATUS_INITIAL_INTERVIEW_FAILED,
+            ],
+            'demo' => [
+                self::STATUS_DEMO_SCHEDULED,
+                self::STATUS_DEMO_COMPLETED,
+                self::STATUS_DEMO_PASSED,
+                self::STATUS_DEMO_FAILED,
+            ],
+            'exam' => [
+                self::STATUS_EXAM_SCHEDULED,
+                self::STATUS_EXAM_COMPLETED,
+                self::STATUS_EXAM_PASSED,
+                self::STATUS_EXAM_FAILED,
+            ],
+            'final_interview' => [
+                self::STATUS_FINAL_INTERVIEW_SCHEDULED,
+                self::STATUS_FINAL_INTERVIEW_COMPLETED,
+                self::STATUS_FINAL_INTERVIEW_PASSED,
+                self::STATUS_FINAL_INTERVIEW_FAILED,
+            ],
+            'offer' => [
+                self::STATUS_OFFER_PENDING,
+                self::STATUS_OFFER_SENT,
+                self::STATUS_OFFER_ACCEPTED,
+                self::STATUS_OFFER_DECLINED,
+                self::STATUS_OFFER_EXPIRED,
+                self::STATUS_OFFER_RETRACTED,
+            ],
+            'pre_employment' => [
+                self::STATUS_PRE_EMPLOYMENT,
+                self::STATUS_PRE_EMPLOYMENT_DOCUMENTS,
+                self::STATUS_PRE_EMPLOYMENT_INITIATED,
+                self::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED,
+                self::STATUS_PRE_EMPLOYMENT_DOCS_SUBMITTED,
+                self::STATUS_PRE_EMPLOYMENT_VERIFICATION,
+                self::STATUS_PRE_EMPLOYMENT_COMPLETED,
+            ],
+            'onboarding' => [
+                self::STATUS_ONBOARDING,
+                self::STATUS_ONBOARDING_INITIATED,
+                self::STATUS_ONBOARDING_COMPLETED,
+            ],
+            'final' => [
+                self::STATUS_HIRED,
+                self::STATUS_REJECTED,
+            ]
+        ];
     }
 
-    public function getMlConfidenceAttribute()
+    // Status transitions
+    public static function allowedTransitions(): array
     {
-        return $this->experience_summary['ml_results']['confidence'] ?? null;
+        return [
+            self::STATUS_APPLIED => [
+                self::STATUS_INITIAL_INTERVIEW_SCHEDULED,
+                self::STATUS_REJECTED,
+            ],
+            self::STATUS_INITIAL_INTERVIEW_PASSED => [
+                self::STATUS_DEMO_SCHEDULED,
+                self::STATUS_EXAM_SCHEDULED,
+            ],
+            self::STATUS_FINAL_INTERVIEW_PASSED => [
+                self::STATUS_OFFER_PENDING,
+                self::STATUS_OFFER_SENT,
+            ],
+            self::STATUS_OFFER_ACCEPTED => [
+                self::STATUS_PRE_EMPLOYMENT_INITIATED,
+            ],
+            // Add more transitions as needed
+        ];
     }
 
-    public function getEnhancedSkillsAttribute()
+    // Check if a status transition is allowed
+    public function canTransitionTo(string $newStatus): bool
     {
-        return $this->experience_summary['ml_results']['enhanced_skills'] ?? [];
+        $allowed = self::allowedTransitions()[$this->status] ?? [];
+        return in_array($newStatus, $allowed);
     }
 
-    public function getMatchScoreAttribute()
+    // Status Validation
+    public function validateStatus()
     {
-        return $this->experience_summary['match_score'] ?? 0;
+        $validStatuses = array_merge(...array_values(self::statusGroups()));
+
+        if (!in_array($this->status, $validStatuses)) {
+            throw new \InvalidArgumentException(
+                "Invalid status: {$this->status}. Valid statuses are: " . implode(', ', $validStatuses)
+            );
+        }
     }
-
-    public function getSkillsArrayAttribute()
-    {
-        return explode(', ', $this->skills);
-    }
-
-    public function hasMlData()
-    {
-        return isset($this->experience_summary['ml_results']);
-    }
-
-   
-
-    public function getResumeUrlAttribute()
-{
-    if (!$this->resume) return null;
-    return Storage::disk('resumes')->url($this->resume);
-}
 
     // Relationships
-    public function job() {
+
+    // Scope queries
+    public function scopePendingOffers($query)
+    {
+        return $query->where('status', self::STATUS_OFFER_PENDING);
+    }
+
+    public function scopeAcceptedOffers($query)
+    {
+        return $query->where('status', self::STATUS_OFFER_ACCEPTED);
+    }
+
+    // Helper methods
+    public function hasPendingOffer(): bool
+    {
+        return $this->status === self::STATUS_OFFER_PENDING;
+    }
+
+    public function hasAcceptedOffer(): bool
+    {
+        return $this->status === self::STATUS_OFFER_ACCEPTED;
+    }
+
+    public function isInPreEmployment(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_PRE_EMPLOYMENT,
+            self::STATUS_PRE_EMPLOYMENT_INITIATED,
+            self::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED,
+            self::STATUS_PRE_EMPLOYMENT_DOCS_SUBMITTED,
+            self::STATUS_PRE_EMPLOYMENT_VERIFICATION,
+        ]);
+    }
+
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+   
+    
+
+    public function job()
+    {
         return $this->belongsTo(Job::class);
     }
+
+    public function recruitmentProcess()
+{
+    return $this->hasMany(RecruitmentProcess::class, 'application_id', 'id');
+}
+public function examEvaluation()
+{
+    return $this->hasOne(ExamEvaluation::class, 'application_id');
+}
 
     public function reviewer() {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
-    public function user() {
-        return $this->belongsTo(User::class);
-    }
+
     public static function boot()
 {
     parent::boot();
@@ -107,6 +258,15 @@ class JobApplication extends Model
         }
     });
 }
+public function applicant() {
+    return $this->belongsTo(User::class, 'applicant_id');
+}
+// In JobApplication model
+public function examEvaluations()
+{
+    return $this->hasMany(ExamEvaluation::class);
+}
+
 
 public static function getStatuses()
 {
@@ -116,4 +276,75 @@ public static function getStatuses()
         self::STATUS_REJECTED,
     ];
 }
+
+
+
+/**
+ * Relationship with PreEmploymentDocument
+ */
+
+
+/**
+ * Check if all documents are verified
+ */
+public function preEmploymentDocument()
+{
+    return $this->hasOne(PreEmploymentDocument::class);
 }
+
+public function preEmploymentStatus()
+{
+    if (!$this->preEmploymentDocument) {
+        return 'not-started';
+    }
+
+    $documents = [
+        'nbi_clearance_verified',
+        'police_clearance_verified',
+        'barangay_clearance_verified',
+        'coe_verified',
+        'drivers_license_verified',
+    ];
+
+    $requiredChecks = [
+        'reference_check_verified',
+        'drug_test_verified',
+        'medical_exam_verified',
+    ];
+
+    $allDocumentsVerified = collect($documents)->every(function ($doc) {
+        return $this->preEmploymentDocument->$doc;
+    });
+
+    $allChecksVerified = collect($requiredChecks)->every(function ($check) {
+        return $this->preEmploymentDocument->$check;
+    });
+
+    if ($allDocumentsVerified && $allChecksVerified) {
+        return 'completed';
+    }
+
+    if ($allDocumentsVerified) {
+        return 'documents-completed';
+    }
+
+    if ($this->preEmploymentDocument->requested_documents) {
+        return 'pending';
+    }
+
+    return 'in-progress';
+}
+
+public function hasRequestedDocuments()
+{
+    return $this->preEmploymentDocument && 
+           !empty(json_decode($this->preEmploymentDocument->requested_documents ?? '[]', true));
+}
+
+
+public function onboarding() {
+    return $this->hasOne(OnboardingProgress::class, 'job_application_id');
+}
+
+}
+

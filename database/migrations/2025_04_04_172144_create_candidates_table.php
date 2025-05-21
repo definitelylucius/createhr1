@@ -17,18 +17,31 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('phone')->nullable();
+            $table->text('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('zip_code')->nullable();
+            $table->string('country')->nullable();
             $table->enum('status', [
-                'new', 
-                'under_review', 
-                'license_verified', 
-                'test_scheduled', 
-                'test_completed', 
-                'pending_approval', 
-                'approved', 
+                'new',
+                'initial_interview',
+                'demo',
+                'exam', 
+                'final_interview',
+                'pre_employment',
+                'onboarding',
+                'hired',
                 'rejected'
             ])->default('new');
-            $table->text('staff_notes')->nullable();
-            $table->text('admin_notes')->nullable();
+            $table->foreign('job_id')->references('id')->on('jobs')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->text('resume_summary')->nullable();
+            $table->text('skills')->nullable();
+            $table->text('experience')->nullable();
+            $table->text('education')->nullable();
+            $table->text('notes')->nullable();
+            $table->boolean('is_employee')->default(false);
+            $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
         });

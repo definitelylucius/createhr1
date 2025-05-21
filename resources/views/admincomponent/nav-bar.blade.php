@@ -1,3 +1,8 @@
+@php
+    $firstInitial = Auth::user()->firstname ? strtoupper(substr(Auth::user()->firstname, 0, 1)) : '';
+    $lastInitial = Auth::user()->lastname ? strtoupper(substr(Auth::user()->lastname, 0, 1)) : '';
+@endphp
+
 <header class="bg-white py-4 px-6 flex justify-between items-center border-b border-gray-300 shadow-lg relative">
     <div class="font-bold text-2xl text-center text-[#00446b]">Nexfleet Dynamics</div>
     <div class="flex items-center space-x-4 relative">
@@ -33,34 +38,39 @@
 
 
 </div>
-        <!-- Profile Icon -->
-        <button type="button" class="p-2 rounded-full hover:bg-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </button>
+<div class="relative">
+            <div class="dropdown">
+                <button class="flex items-center text-gray-600 hover:text-gray-900 focus:outline-none">
+                
+<div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+    <span class="text-indigo-600 font-semibold">
+        {{ $firstInitial }}{{ $lastInitial }}
+    </span>
+</div>
+<span class="hidden md:inline">
+    {{ Auth::user()->firstname }} {{ Auth::user()->lastname }}
+</span>
+<i class="fas fa-chevron-down ml-1 text-xs"></i>
 
-        <!-- Settings Icon with Dropdown -->
-        <div class="relative">
-            <button type="button" onclick="toggleSettingsDropdown()" class="p-2 rounded-full hover:bg-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                </svg>
-            </button>
-
-            <!-- Settings Dropdown -->
-            <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
-                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Settings</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">
-                        {{ __('Log Out') }}
-                    </button>
-                </form>
+                </button>
+                
+                <div class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user mr-2"></i> Profile
+                    </a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog mr-2"></i> Settings
+                    </a>
+                    <div class="border-t border-gray-200"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
 </header>
 
 <script>
@@ -139,6 +149,24 @@ function toggleNotificationDropdown() {
 function toggleSettingsDropdown() {
     document.getElementById('settingsDropdown').classList.toggle('hidden');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+        // Toggle dropdown menu
+        const dropdownBtn = document.querySelector('.dropdown button');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        
+        if (dropdownBtn && dropdownMenu) {
+            dropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                dropdownMenu.classList.add('hidden');
+            });
+        }
+    });
 
 </script>
 

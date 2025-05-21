@@ -62,7 +62,7 @@
                             <td class="py-3 px-6">{{ $user->email }}</td>
                             <td class="py-3 px-6">{{ ucfirst($user->role) }}</td>
                             <td class="py-3 px-6">
-                                <a href="{{ route('superadmin.editUser', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{{ route('superadmin.editUser', $user->id) }}"  class="btn btn-sm btn-warning">Edit</a>
                                 <form action="{{ route('superadmin.destroy', $user->id) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')

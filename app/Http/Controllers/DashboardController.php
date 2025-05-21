@@ -15,9 +15,9 @@ class DashboardController extends Controller
             case 'superadmin':
                 return view('superadmin.dashboard');
             case 'admin':
-                return view('admin.dashboard');
+                return view('admin.recruitment.dashboard');
             case 'staff':
-                return view('staff.dashboard');
+                return view('staff.recruitment.dashboard');
             case 'employee':
                 return view('employee.dashboard');
             case 'applicant':
@@ -26,4 +26,9 @@ class DashboardController extends Controller
                 abort(403, 'Unauthorized access');
         }
     }
+
+    public function recruitmentDashboard()
+{
+    return view('staff.recruitment.dashboard');
+}
 }

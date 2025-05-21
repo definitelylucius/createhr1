@@ -1,7 +1,21 @@
-@extends('layouts.app') {{-- Or use your layout file --}}
+<!DOCTYPE html>
+<html lang="en">
 
-@section('content')
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @vite('resources/css/app.css')
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>NexfleetDynamics - Login</title>
+</head>
+
+<body>
 <div class="flex justify-center items-center h-screen bg-gray-100">
+
     <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
         <h2 class="text-2xl font-bold mb-4 text-center">Two-Factor Authentication</h2>
         <p class="mb-4 text-sm text-gray-600 text-center">
@@ -36,4 +50,6 @@
         </form>
     </div>
 </div>
-@endsection
+</body>
+
+</html>

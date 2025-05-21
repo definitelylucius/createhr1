@@ -55,11 +55,6 @@ class Employee extends Authenticatable
 }
 
 // Relationship with Onboarding (One Employee has One Onboarding record)
-public function onboarding()
-{
-    return $this->hasOne(EmployeeOnboarding::class, 'employee_id', 'id');
-}
 
-    
 }
 

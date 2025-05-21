@@ -77,9 +77,9 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     // ... other guest routes ...
     
-    // 2FA Routes
     Route::get('/two-factor-challenge', [AuthenticatedSessionController::class, 'showTwoFactorForm'])
-        ->name('two-factor.challenge');
-    Route::post('/two-factor-challenge', [AuthenticatedSessionController::class, 'verifyTwoFactor'])
-        ->name('two-factor.verify');
+    ->name('two-factor.challenge');
+
+Route::post('/two-factor-challenge', [AuthenticatedSessionController::class, 'verifyTwoFactor'])
+    ->name('two-factor.verify');
 });

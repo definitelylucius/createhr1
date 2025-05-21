@@ -3,24 +3,39 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Applicant extends Authenticatable
+class Applicant extends Model
 {
-    use HasFactory, Notifiable;
-
-    protected $guard = 'applicant';
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
-        'password',
-        'resume',
+        'phone',
+        'skills',
+        'experience',
+        'education',
+        'resume_file',
+        'resume_original_name',
+        'raw_text',
+        'parsed_data',
+        'user_id'
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
+    protected $casts = [
+        'parsed_data' => 'array',
+        'skills' => 'array'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getResumeUrlAttribute()
+    {
+        return $this->resume_file ? asset('storage/'.$this->resume_file) : null;
+    }
 }

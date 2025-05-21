@@ -10,10 +10,32 @@ return new class extends Migration
     {
         Schema::create('candidate_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('candidate_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['resume', 'cover_letter', 'certificate', 'other']);
+            $table->foreignId('candidate_id')->constrained()->cascadeOnDelete();
+            $table->enum('type', [
+                'resume',
+                'nbi_clearance',
+                'barangay_clearance',
+                'police_clearance',
+                'driver_license',
+                'medical_certificate',
+                'drug_test',
+                'sss',
+                'philhealth',
+                'pagibig',
+                'tin',
+                'certificate_of_employment',
+                'diploma',
+                'transcript',
+                'other'
+            ]);
+            $table->string('name');
             $table->string('file_path');
-            $table->string('original_name');
+            $table->text('metadata')->nullable();
+            $table->text('parsed_data')->nullable();
+            $table->boolean('is_verified')->default(false);
+            $table->text('verification_notes')->nullable();
+            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
     }

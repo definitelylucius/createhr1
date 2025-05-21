@@ -18,4 +18,12 @@ class OnboardingProgress extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function allDocumentsUploaded()
+{
+    return $this->employment_contract && 
+           $this->tax_forms && 
+           $this->company_policies && 
+           $this->training_materials;
+}
 }

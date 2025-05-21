@@ -1,6 +1,264 @@
-
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 div.bus-background {
     background-image: url("../images/bus-background.jpg");
 }
 
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    background: #2c3e50;
+    color: #ecf0f1;
+    height: 100vh;
+    position: fixed;
+    transition: all 0.3s;
+    z-index: 1000;
+    top: 0; /* Ensure it starts from the top */
+    left: 0; /* Position it on the left */
+}
+
+.sidebar-header {
+    padding: 20px;
+    background: #1a252f;
+    text-align: center;
+}
+
+.sidebar-header h4 {
+    color: #fff;
+    margin-bottom: 0;
+}
+
+.sidebar-header p {
+    color: #bdc3c7;
+    font-size: 0.8rem;
+    margin-bottom: 0;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    position: relative;
+}
+
+.sidebar-link {
+    padding: 12px 20px;
+    display: block;
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    color: #fff;
+    background: #34495e;
+}
+
+.sidebar-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-submenu {
+    list-style: none;
+    padding-left: 40px;
+    background: #1a252f;
+    display: none;
+}
+
+.sidebar-submenu li a {
+    padding: 8px 15px;
+    display: block;
+    color: #bdc3c7;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.sidebar-submenu li a:hover {
+    color: #fff;
+}
+
+.sidebar-item.active .sidebar-submenu {
+    display: block;
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.sidebar-header { /* Re-applying as it was moved in the original */
+    font-size: 0.9rem;
+    padding: 10px 20px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 15px;
+}
+
+/* Style for the main content area */
+.main-content {
+    margin-left: 250px; /* Push content to the right by the sidebar's width */
+    padding: 20px; /* Add some padding around the content */
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -250px; /* Hide the sidebar off-screen */
+        position: fixed; /* Keep it fixed for the toggle effect */
+    }
+    .sidebar.active {
+        margin-left: 0; /* Slide the sidebar in */
+    }
+    .main-content {
+        margin-left: 0; /* Reset margin for small screens when sidebar is hidden */
+        padding: 15px; /* Adjust padding for smaller screens */
+    }
+}
+
+/* Dropzone Styling */
+.dropzone {
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.dropzone:hover {
+    background-color: #f8f9fa;
+}
+
+/* Signature Pad Styling */
+.signature-pad {
+    background-color: white;
+}
+
+/* Table Styling */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Badge Styling */
+.badge.bg-label-primary {
+    background-color: rgba(105, 108, 255, 0.16);
+    color: #696cff;
+}
+
+.badge.bg-label-success {
+    background-color: rgba(40, 199, 111, 0.16);
+    color: #28c76f;
+}
+
+.badge.bg-label-warning {
+    background-color: rgba(255, 159, 67, 0.16);
+    color: #ff9f43;
+}
+
+.badge.bg-label-secondary {
+    background-color: rgba(130, 134, 139, 0.16);
+    color: #82868b;
+}
+
+/* Card Styling */
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Avatar Styling */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.avatar-initial {
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .table-responsive {
+        width: 100%;
+        margin-bottom: 1rem;
+        overflow-y: hidden;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+        border: 1px solid #dee2e6;
+    }
+}
+
+/* Navbar Styles */
+.navbar {
+    position: fixed; /* Make the navbar fixed to the top */
+    top: 0;
+    left: 0;
+    right: 0; /* Make it span the entire width */
+    background-color: #f8f9fa; /* Or any background color you prefer */
+    z-index: 1001; /* Ensure it's above the sidebar (which has z-index: 1000) and other content */
+    border-bottom: 1px solid #e3e6f0; /* Optional: Add a bottom border for separation */
+    height: 60px; /* Adjust to the actual height of your navbar */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Already handled by your flex classes */
+    padding-left: 1rem; /* Adjust padding as needed */
+    padding-right: 1rem; /* Adjust padding as needed */
+}
+
+/* Adjust main content to account for the fixed navbar */
+.main-content {
+    margin-left: 250px; /* Keep the sidebar margin */
+    padding-top: 60px; /* Add padding equal to the navbar height */
+    padding-left: 20px; /* Keep existing padding */
+    padding-right: 20px; /* Keep existing padding */
+    padding-bottom: 20px; /* Keep existing padding */
+    min-height: calc(100vh - 60px); /* Ensure content takes up at least the viewport height minus navbar height */
+}
+
+/* Responsive adjustments for main content */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0; /* Reset sidebar margin */
+        padding-top: 50px; /* Adjust top padding for smaller screens if needed */
+        padding: 15px; /* Adjust other padding */
+        min-height: calc(100vh - 50px); /* Adjust min-height */
+    }
+
+    /* You might need to adjust the navbar height or styles for smaller screens here */
+    .navbar {
+        height: 50px; /* Example adjustment for smaller screens */
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    
+}

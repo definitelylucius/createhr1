@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
   <!-- DaisyUI CDN -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <title>Admin Dashboard - Post a Job</title>
   <style>
     .sidebar-transition {
@@ -35,17 +37,14 @@
 <body class="bg-gray-100 font-[Poppins] text-[#1e293b]">
 <body class="bg-gray-50 font-[Poppins] text-gray-800">
 
- <!-- Navbar -->
- @include('admincomponent.nav-bar')
-
-<div class="flex min-h-[calc(100vh-4rem)]"> <!-- Subtract navbar height -->
-    <!-- Sidebar - Fixed width -->
-    <div class="w-64 flex-shrink-0 bg-white border-r border-gray-200 shadow-sm">
-        @include('admincomponent.side-bar')
-    </div>
-
-
-        <!-- Main Content -->
+@include('layouts.partials.admin-navbar')
+@include('layouts.partials.admin-sidebar')
+ <!-- Main Content Area -->
+ <div class="flex-1 overflow-y-auto lg:ml-64 transition-all duration-200 bg-gray-50">
+ 
+            <!-- Main Content -->
+            <main class="p-6">
+            
          
         <div class="flex-1 overflow-y-auto p-4">
       <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg p-8">
@@ -201,6 +200,33 @@
         textarea.dispatchEvent(new Event('input'));
       });
     });
+
+      // Dropdown menu functionality
+      document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                const btn = dropdown.querySelector('button');
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                if (btn && menu) {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        // Close other dropdowns first
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            if (m !== menu) m.classList.add('hidden');
+                        });
+                        // Toggle this one
+                        menu.classList.toggle('hidden');
+                    });
+                }
+            });
+
+            // Global click handler to close all dropdowns
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            });
+        });
   </script>
 </body>
 </html>

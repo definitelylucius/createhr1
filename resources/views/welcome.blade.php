@@ -6,6 +6,7 @@
     <title>NexFleetDynamics | Bus Staff Recruitment System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/dayjs@1.11.7/dayjs.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         .hero-gradient {
@@ -50,14 +51,45 @@
                 <!-- Settings Dropdown -->
                 <div class="relative">
                     <button type="button" onclick="toggleSettingsDropdown()" class="p-2 rounded-full hover:bg-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c...Z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </button>
-
                     <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
                         <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Settings</a>
+                        
+                        @php
+    $latestApplication = auth()->user()->jobApplications()->latest()->first();
+    $hasRequestedDocuments = $latestApplication && 
+                            $latestApplication->preEmploymentDocument &&
+                            !empty(json_decode($latestApplication->preEmploymentDocument->requested_documents ?? '[]', true));
+@endphp
+
+@if($hasRequestedDocuments)
+    <a href="{{ route('applicant.documents.upload', ['applicationId' => $latestApplication->id]) }}" 
+       class="block px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200">
+        Upload Required Documents
+    </a>
+@else
+    <p class="block px-4 py-2 text-gray-600 bg-gray-100 rounded-md">
+    @if($latestApplication)
+        @if($latestApplication->status === \App\Models\JobApplication::STATUS_PROCESSING)
+            Documents submitted - application in progress
+        @elseif($latestApplication->status === \App\Models\JobApplication::STATUS_PENDING)
+            Waiting for document request
+        @elseif($latestApplication->status === \App\Models\JobApplication::STATUS_FINAL_INTERVIEW_PASSED)
+            Final interview passed - please wait for document request
+        @else
+            No documents required at this time
+        @endif
+    @else
+        No active application found
+    @endif
+    </p>
+@endif
+
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">
@@ -78,26 +110,9 @@
             </button>
         </div>
     </nav>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white py-2 px-4 shadow-lg">
-        <button onclick="scrollToSection('features')" class="block w-full text-left py-2 text-gray-700 hover:text-[#00446b]">How It Works</button>
-        <button onclick="scrollToSection('jobs')" class="block w-full text-left py-2 text-gray-700 hover:text-[#00446b]">Job Board</button>
-        <button onclick="scrollToSection('faq')" class="block w-full text-left py-2 text-gray-700 hover:text-[#00446b]">FAQs</button>
-
-        <div class="border-t border-gray-200 mt-2 pt-2">
-            @guest
-                <a href="{{ route('login') }}" class="block w-full text-left py-2 text-[#00446b] font-medium">Login</a>
-            @else
-                <a href="#" class="block w-full text-left py-2 text-gray-700 hover:text-[#00446b]">Settings</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="block w-full text-left py-2 text-gray-700 hover:text-[#00446b]">Log Out</button>
-                </form>
-            @endguest
-        </div>
-    </div>
 </header>
+
+
 
 
    <!-- Hero Section - Redesign -->
@@ -487,20 +502,16 @@
             </div>
         </div>
     </section>
-    
-<!-- Debug Database Parsing Results -->
-@php
+    @php
 use Illuminate\Support\Facades\Storage;
-@endphp
 
-@php
-    function formatBytes($bytes, $precision = 2) {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $bytes /= pow(1024, $pow);
-        return number_format($bytes, $precision) . ' ' . $units[$pow];
-    }
+function formatBytes($bytes, $precision = 2) {
+    $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $bytes /= pow(1024, $pow);
+    return number_format($bytes, $precision) . ' ' . $units[$pow];
+}
 @endphp
 
 @if(session('success'))
@@ -511,74 +522,8 @@ use Illuminate\Support\Facades\Storage;
             &times;
         </button>
     </div>
-
-    <div class="p-4 max-h-96 overflow-y-auto">
-        @php
-            // Fetch the latest candidate details (submitted by the authenticated user)
-            $candidate = auth()->user()->candidates()->latest()->first();
-            
-            // Fetch the candidate's resume document
-            $candidateDocument = $candidate ? $candidate->documents()->where('type', 'resume')->latest()->first() : null;
-            $fileExists = $candidateDocument && Storage::disk('candidate_documents')->exists($candidateDocument->file_path);
-            $fileSize = $fileExists ? Storage::disk('candidate_documents')->size($candidateDocument->file_path) : 0;
-
-            // Fetch parsed resume data if available
-            $parsedResume = $candidate ? $candidate->parsedResumes()->latest()->first() : null;
-        @endphp
-
-       
-
-        <!-- Candidate Info -->
-        <div class="mb-4">
-            <h4 class="font-medium text-sm text-gray-700 mb-1">Candidate Details</h4>
-            <div class="text-xs space-y-1">
-                <p><strong class="w-32 inline-block">First Name:</strong> {{ $candidate->first_name ?? 'NULL' }}</p>
-                <p><strong class="w-32 inline-block">Last Name:</strong> {{ $candidate->last_name ?? 'NULL' }}</p>
-                <p><strong class="w-32 inline-block">Email:</strong> {{ $candidate->email ?? 'NULL' }}</p>
-                <p><strong class="w-32 inline-block">Phone:</strong> {{ $candidate->phone ?? 'NULL' }}</p>
-                <p><strong class="w-32 inline-block">Status:</strong> {{ $candidate->status ?? 'NULL' }}</p>
-            </div>
-        </div>
-
-        <!-- Resume File Storage -->
-        @if($fileExists)
-        <div class="mt-3 text-xs">
-            <h4 class="font-medium text-sm text-gray-700 mb-1">File Storage</h4>
-            <p>
-                <strong>Exists:</strong> YES
-            </p>
-            <p>
-                <strong>Size:</strong> {{ formatBytes($fileSize) }}
-            </p>
-        </div>
-        @else
-        <div class="mt-3 text-xs">
-            <h4 class="font-medium text-sm text-gray-700 mb-1">File Storage</h4>
-            <p><strong>Exists:</strong> NO</p>
-            <p><strong>Size:</strong> 0 bytes</p>
-        </div>
-        @endif
-
-        <!-- Parsed Resume Data -->
-        @if($parsedResume)
-        <div class="mt-4">
-            <h4 class="font-medium text-sm text-gray-700 mb-1">Parsed Resume Data</h4>
-            <div class="text-xs space-y-1">
-                <p><strong class="w-32 inline-block">Skills:</strong> {{ implode(', ', $parsedResume->skills ?? []) }}</p>
-                <p><strong class="w-32 inline-block">Experience Years:</strong> {{ $parsedResume->experience_years ?? 'N/A' }}</p>
-                <p><strong class="w-32 inline-block">Education:</strong> {{ $parsedResume->education ?? 'N/A' }}</p>
-                <p><strong class="w-32 inline-block">Job History:</strong> {{ implode(', ', $parsedResume->job_history ?? []) }}</p>
-            </div>
-        </div>
-        @else
-        <div class="mt-4 text-xs">
-            <p>No parsed resume data available.</p>
-        </div>
-        @endif
-    </div>
-</div>
+   
 @endif
-
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">

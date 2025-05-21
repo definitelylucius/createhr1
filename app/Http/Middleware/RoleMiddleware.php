@@ -14,15 +14,14 @@ class RoleMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        // Check if the user is authenticated and has the correct role
-        if (Auth::check() && Auth::user()->role === $role) {
+        if (Auth::check() && in_array(Auth::user()->role, $roles)) {
             return $next($request);
         }
-
-        // Redirect to a specific page if the user does not have the correct role
-        return redirect()->route('home'); // You can redirect to any route you prefer
+    
+        // Optional: redirect or show 403
+        abort(403, 'Unauthorized access.');
     }
     
 }

@@ -2,45 +2,33 @@
 
 namespace App\Mail;
 
+use App\Models\Candidate;
+use App\Models\CalendarEvent;
+use App\Models\HiringProcessStage;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\JobApplication;
-
-namespace App\Mail;
-
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
-use App\Models\JobApplication;
 
 class InterviewInvitation extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $application;
-    public $subjectLine;
-    public $customMessage;
+    public $candidate;
+    public $stage;
+    public $event;
 
-    public function __construct(JobApplication $application, $subject, $customMessage)
+    public function __construct(Candidate $candidate, HiringProcessStage $stage, CalendarEvent $event)
     {
-        $this->application = $application;
-        $this->subjectLine = $subject;
-        $this->customMessage = $customMessage;
+        $this->candidate = $candidate;
+        $this->stage = $stage;
+        $this->event = $event;
     }
 
     public function build()
     {
-        return $this->subject($this->subjectLine)
-                    ->view('emails.interview_invitation')
-                    ->with([
-                        'name' => $this->application->user->name,
-                        'jobTitle' => $this->application->job->title,
-                        'email' => $this->application->user->email,
-                        'customMessage' => $this->customMessage,
-                    ]);
+        $subject = 'Invitation for ' . ucfirst(str_replace('_', ' ', $this->stage->stage)) . ' - ' . $this->candidate->job->title;
+
+        return $this->subject($subject)
+                    ->markdown('emails.interview-invitation');
     }
 }
-

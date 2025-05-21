@@ -1,141 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daisyui@1.17.0/dist/full.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Hiring Applicants | Admin Dashboard</title>
-</head>
-<body class="bg-gray-100 font-[Poppins]">
+@extends('layouts.admin')
 
-@include('admincomponent.nav-bar')
-
-<div class="flex min-h-screen">
-    @include('admincomponent.side-bar')
-
-    <div class="flex-1 min-h-screen p-6">
-        
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h1 class="text-3xl font-bold text-[#00446b]">Admin Review - Job Applications</h1>
-            <p class="text-gray-600">Applications reviewed by staff that require admin approval.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Applicant List -->
-            <div class="bg-white p-6 shadow-lg rounded-xl">
-                <h3 class="text-lg font-semibold text-[#00446b] mb-4">Applicants Pending Admin Review</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full border border-gray-300 rounded-lg shadow-md">
-                        <thead>
-                            <tr class="bg-[#00446b] text-white">
-                                <th class="p-4 text-left text-sm font-semibold">Name</th>
-                                <th class="p-4 text-left text-sm font-semibold">Job Title</th>
-                                <th class="p-4 text-left text-sm font-semibold">Reviewed By</th>
-                                <th class="p-4 text-left text-sm font-semibold">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-300">
-                            @foreach($applications as $application)
-                                @if($application->status === 'recommended_for_hiring') 
-                                    <tr class="hover:bg-indigo-50 transition duration-200 cursor-pointer"
-                                        onclick="toggleApplicantSelection('{{ $application->id }}', this)">
-                                        <td class="p-4 text-gray-800">{{ $application->name }}</td>
-                                        <td class="p-4 text-gray-600">{{ $application->job->title }}</td>
-                                        <td class="p-4 text-gray-600">
-                                            {{ optional($application->reviewer)->name ?? 'Not Reviewed Yet' }}
-                                        </td>
-                                        <td class="p-4">
-                                            <span class="px-3 py-1 rounded-full text-sm font-semibold bg-green-200 text-green-800">
-                                                {{ $application->status }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Applicant Details -->
-            <div class="bg-white p-6 shadow-lg rounded-xl">
-                <h3 class="text-lg font-semibold text-[#00446b] mb-4">Applicant Details</h3>
-                
-                <input type="hidden" id="application-id">
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium">Name:</label>
-                    <input type="text" id="applicant-name" class="w-full p-3 border rounded-md bg-gray-100" readonly>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium">Job Applied For:</label>
-                    <input type="text" id="applicant-job" class="w-full p-3 border rounded-md bg-gray-100" readonly>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium">Email:</label>
-                    <input type="email" id="applicant-email" class="w-full p-3 border rounded-md bg-gray-100" readonly>
-                </div>
-                 <!-- Hire Applicants -->
-        <div class="bg-white p-6 shadow-lg rounded-xl">
-            <h3 class="text-lg font-semibold text-[#00446b] mb-4">Hire Selected Applicants</h3>
-
-            <!-- Hidden Field to Store Selected Applicant IDs -->
-            <form method="POST" id="hireForm">
-                @csrf
-                @method('POST')
-
-                <!-- Hidden Field to Store Selected Applicant IDs -->
-                <input type="hidden" name="selected_applicants" id="selectedApplicants">
-
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                    Hired
-                </button>
-            </form>
+@section('content')
+@include('layouts.partials.admin-navbar')
+@include('layouts.partials.admin-sidebar')
+ <!-- Main Content Area -->
+ <div class="flex-1 overflow-y-auto lg:ml-64 transition-all duration-200 bg-gray-50">
+ 
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Hired Candidates</h2>
+        <div class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full">
+            Total: {{ $applications->total() }}
         </div>
     </div>
-            </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hire Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($applications as $application)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <span class="text-emerald-600 font-medium">{{ substr($application->firstname, 0, 1) }}</span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $application->firstname }} {{ $application->lastname }}</div>
+                                    <div class="text-sm text-gray-500">{{ $application->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ $application->job->title ?? 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">{{ $application->job->department ?? '' }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $application->hired_date ? $application->hired_date->format('M d, Y') : 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $application->employee_id ?? 'Not assigned' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800">
+                                {{ str_replace('_', ' ', $application->status) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{{ route('employees.show', $application->employee_id) }}" class="text-emerald-600 hover:text-emerald-900 mr-3">Profile</a>
+                            <a href="#" class="text-blue-600 hover:text-blue-900">Documents</a>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hired employees found</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-        
-        
-
-    <script>
-    let selectedApplicants = [];
-
-    // Toggle applicant selection when clicked
-    function toggleApplicantSelection(applicantId, row) {
-        // If applicant is already selected, remove it from the array
-        if (selectedApplicants.includes(applicantId)) {
-            selectedApplicants = selectedApplicants.filter(id => id !== applicantId);
-            row.classList.remove('bg-indigo-100');  // Remove highlight
-        } else {
-            // If not selected, add it to the array
-            selectedApplicants.push(applicantId);
-            row.classList.add('bg-indigo-100');  // Highlight row
-        }
-
-        // Update hidden field with selected applicant IDs
-        document.getElementById('selectedApplicants').value = selectedApplicants.join(',');
-    }
-
-    // Set form action dynamically when the form is submitted
-    document.getElementById('hireForm').onsubmit = function() {
-        let applicantIds = document.getElementById('selectedApplicants').value;
-        if (!applicantIds) {
-            alert("Please select at least one applicant.");
-            return false; // Prevent form submission if no applicants are selected
-        }
-        this.action = `/admin/applicants/hire/${applicantIds}`;
-    };
-</script>
-
-
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+            {{ $applications->links() }}
+        </div>
+    </div>
 </div>
-</body>
-</html>
+<script>
+      // Dropdown menu functionality
+      document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                const btn = dropdown.querySelector('button');
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                if (btn && menu) {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        // Close other dropdowns first
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            if (m !== menu) m.classList.add('hidden');
+                        });
+                        // Toggle this one
+                        menu.classList.toggle('hidden');
+                    });
+                }
+            });
+
+            // Global click handler to close all dropdowns
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            });
+        });
+</script>
+@endsection

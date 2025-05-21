@@ -47,9 +47,14 @@ class User extends Authenticatable
    {
        $this->forceFill([
            'two_factor_code' => str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT),
-           'two_factor_expires_at' => Carbon::now()->addMinutes(10),
-           'two_factor_confirmed_at' => null, // Reset confirmation
+           'two_factor_expires_at' => now()->addMinutes(10),
        ])->save();
+   }
+   
+   public function verifyTwoFactorCode($code): bool
+   {
+       return $this->two_factor_code === (string)$code && 
+              now()->lt($this->two_factor_expires_at);
    }
    
    public function resetTwoFactorCode()
@@ -60,18 +65,12 @@ class User extends Authenticatable
        ])->save();
    }
    
-   public function verifyTwoFactorCode($code): bool
-   {
-       return $this->two_factor_code && 
-              hash_equals((string)$this->two_factor_code, (string)$code) &&
-              Carbon::parse($this->two_factor_expires_at)->isFuture();
-   }
-   
    public function hasTwoFactorEnabled(): bool
    {
        return !empty($this->two_factor_secret);
    }
-
+   
+  
     public function isSuperAdmin()
     {
         return $this->role === 'superadmin';
@@ -115,15 +114,9 @@ public function employee()
     }
   
 
-    public function employeeOnboarding()
-{
-    return $this->hasOne(EmployeeOnboarding::class);
-}
 
-public function onboardingStatus()
-{
-    return $this->hasOne(EmployeeOnboarding::class, 'user_id');
-}
+
+
 public function tasks()
 {
     return $this->hasMany(Task::class, 'user_id');
@@ -133,7 +126,13 @@ public function jobApplications()
     return $this->hasMany(JobApplication::class);
 }
 
-public function candidates()
+/*************  ✨ Windsurf Command ⭐  *************/
+    /**
+     * Get the candidates that belong to the User
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+/*******  aba06dc8-a953-4860-b715-8ea0bfad4131  *******/public function candidates()
 {
     return $this->hasMany(Candidate::class);
 }
@@ -145,10 +144,7 @@ public function onboardingTasks()
         ->withTimestamps();
 }
 
-public function documents()
-{
-    return $this->hasMany(EmployeeDocument::class);
-}
+
 
 public function manager()
 {
@@ -159,6 +155,13 @@ public function teamMembers()
 {
     return $this->hasMany(User::class, 'manager_id');
 }
+
+public function applications()
+{
+    return $this->hasMany(JobApplication::class);
+}
+
+// Accessor for firstname (makes $user->first_name work)
 
 
 }

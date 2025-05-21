@@ -1,328 +1,308 @@
 <?php
+
 namespace App\Http\Controllers;
-use App\Services\LocalResumeParser;
-use Illuminate\Http\Request;
-use App\Models\Application;
-use Illuminate\Support\Facades\Auth;
+
 use App\Models\Job;
 use App\Models\JobApplication;
-use App\Mail\ApplicationRejected;
-use App\Mail\AdminReviewNotification;
-use App\Mail\InterviewScheduled;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\InterviewInvitation;
-use App\Mail\RejectionEmail;
+use App\Models\RecruitmentProcess;
+use App\Models\PreEmploymentDocument;
+use App\Models\OfferLetter;
+use App\Models\OnboardingDocument;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\File;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
-use App\Models\Candidate;
-
 
 class ApplicationController extends Controller
 {
-    
-    
+    const STATUS_PRE_EMPLOYMENT_COMPLETED = 'pre_employment_completed';
+
+    protected $preEmploymentDocument;
+    protected $status;
+
+    public function __construct()
+    {
+        $this->preEmploymentDocument = null;
+    }
+
+    // Store new application
     public function store(Request $request, $jobId)
     {
-        // Validate incoming request
+        Log::info('Starting job application submission', ['job_id' => $jobId, 'user' => auth()->id()]);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:candidates,email',
-            'resume' => 'required|file|mimes:pdf,docx|max:5120',
+            'firstname' => 'required|string|max:255',
+            'lastname' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'resume' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'address' => 'nullable|string|max:255', // Added address validation
         ]);
-    
+
+        Log::debug('Validation passed', ['validated_data' => $validated]);
+
         try {
-            $user = Auth::user();
-            if (!$user) {
-                return back()->with('error', 'You must be logged in to apply.');
-            }
-    
+            Log::debug('Attempting to find job', ['job_id' => $jobId]);
             $job = Job::findOrFail($jobId);
-    
-            // Handle file upload
-            $file = $request->file('resume');
-            $fileName = 'user_'.$user->id.'_'.time().'.'.$file->extension();
-    
+            Log::info('Job found', ['job' => $job->id]);
+
+            // Store resume
             try {
-                $filePath = $file->storeAs(
-                    "job_$jobId",
-                    $fileName,
-                    'resumes'
-                );
-    
-                $absolutePath = Storage::disk('resumes')->path($filePath);
-    
-                if (!file_exists($absolutePath)) {
-                    throw new \Exception("File storage verification failed at: " . $absolutePath);
-                }
-    
-                if (filesize($absolutePath) === 0) {
-                    throw new \Exception("Stored file is empty");
-                }
-    
-            } catch (\Exception $e) {
-                Log::error("File storage failed", [
-                    'original_name' => $file->getClientOriginalName(),
-                    'error' => $e->getMessage(),
-                    'storage_root' => config('filesystems.disks.resumes.root')
+                $originalName = $request->resume->getClientOriginalName();
+                $safeName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+                $extension = $request->resume->getClientOriginalExtension();
+                $resumeName = $safeName.'_'.time().'.'.$extension;
+                
+                Log::debug('Attempting to store resume', [
+                    'original_name' => $originalName,
+                    'safe_name' => $resumeName
                 ]);
-                return back()->with('error', 'Failed to store resume: ' . $e->getMessage());
-            }
-    
-            // Resume parsing
-            try {
-                $parser = new LocalResumeParser();
-                $parsedData = $parser->parse($absolutePath, $job->department) ?? $this->getDefaultParsedData();
+
+                $resumePath = $request->file('resume')->storeAs(
+                    'resumes', 
+                    $resumeName, 
+                    'public'
+                );
+                
+                Log::info('Resume stored successfully', ['path' => $resumePath]);
             } catch (\Exception $e) {
-                Log::error("Resume parsing failed: " . $e->getMessage());
-                $parsedData = $this->getDefaultParsedData();
+                Log::error('Resume storage failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
             }
-    
-            // Split full name into first and last
-            $nameParts = explode(' ', trim($validated['name']), 2);
-            $firstName = $nameParts[0];
-            $lastName = $nameParts[1] ?? '';
-    
-            // Store into candidates table
-            $candidate = Candidate::create([
-                'first_name'    => $firstName,
-                'last_name'     => $lastName,
-                'email'         => $validated['email'],
-                'phone'         => $parsedData['phone'] ?? null,
-                'status'        => ($parsedData['match_score'] ?? 0) < 50 ? 'rejected' : 'under_review',
-                'staff_notes'   => json_encode([
-                    'skills' => $parsedData['skills'] ?? [],
-                    'match_score' => $parsedData['match_score'] ?? null,
-                    'cdl_status' => $parsedData['cdl_mentioned'] ?? false,
-                    'parser_used' => $parsedData['parser_used'] ?? 'LocalResumeParser',
-                    'resume' => $filePath,
-                ]),
-            ]);
-    
-            return redirect()->route('application.success', $candidate->id)
-                   ->with('success', 'Application submitted successfully!');
-            
+
+            // Prepare application data
+            $applicationData = [
+                'job_id' => $jobId,
+                'firstname' => $validated['firstname'],
+                'lastname' => $validated['lastname'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'] ?? null, // Fixed undefined variable
+                'resume_path' => $resumePath,
+                'status' => JobApplication::STATUS_APPLIED, // Changed from 'submitted' to use constant
+                'current_stage' => 'application'
+            ];
+
+            if (auth()->check()) {
+                $applicationData['user_id'] = auth()->id();
+                Log::debug('User authenticated', ['user_id' => auth()->id()]);
+            }
+
+            Log::debug('Attempting to create application', ['application_data' => $applicationData]);
+
+            $application = JobApplication::create($applicationData);
+            Log::info('Application created successfully', ['application_id' => $application->id]);
+
+            return redirect()->route('application.success', $application->id)
+                ->with('success', 'Application submitted successfully!');
+
         } catch (\Exception $e) {
-            if (isset($filePath) && Storage::disk('resumes')->exists($filePath)) {
-                Storage::disk('resumes')->delete($filePath);
-            }
-    
-            Log::error("Application Error: " . $e->getMessage());
-            return back()->with('error', 'Application processing failed. Please try again.');
+            Log::error('Application submission failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->all()
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Application failed. Please check the logs for details.');
         }
     }
-    
-    
 
-// Helper methods
-protected function extractCombinedSkills(array $parsedData): string
-{
-    return implode(', ', array_unique(array_merge(
-        $parsedData['skills'] ?? [],
-        $parsedData['ml_predictions']['skills'] ?? []
-    )));
-}
-
-protected function determineCdlStatus(array $parsedData): bool
-{
-    return $parsedData['cdl_mentioned'] || 
-          ($parsedData['ml_predictions']['cdl_mentioned'] ?? false);
-}
-
-protected function calculateEnhancedMatchScore(array $parsedData): int
-{
-    $baseScore = $parsedData['match_score'] ?? 0;
-    $mlScore = $parsedData['ml_predictions']['department_match_score'] ?? 0;
-    return (int) round(($baseScore * 0.4) + ($mlScore * 0.6));
-}
-
-    
-    protected function getDefaultParsedData(): array
-    {
-        return [
-            'skills' => [],
-            'department_skills' => [],
-            'cdl_mentioned' => false,
-            'experience' => [],
-            'certifications' => [],
-            'match_score' => 0,
-            'raw_text' => '',
-            'parser_used' => 'LocalResumeParser',
-            'ml_predictions' => [
-                'ml_available' => false,
-                'error' => 'Default fallback data'
-            ],
-            'success' => false
-        ];
-    }
-    
-   
-
-
-    public function trackApplications()
-    {
-        $applications = Application::where('user_id', Auth::id())->get();
-        return view('staff.recruitment.applicants.track', compact('applications'));
-    }
-
-   
-
-
+    // View all applicants
     public function viewApplications()
     {
-        $applications = Application::with('job')->get();
-        return view('staff.recruitment.applicants.view', compact('applications'));
+        $applicants = JobApplication::paginate(5);
+        
+        // Get totals for each category
+        $totalApplicants = JobApplication::count();
+        $totalInitialInterviews = JobApplication::where('current_stage', 'Initial Interview')->count();
+        $totalInterviews = JobApplication::where('current_stage', 'Interview')->count();
+        $totalOffers = JobApplication::where('current_stage', 'Offer')->count();
+        $totalHires = JobApplication::where('current_stage', 'Hired')->count();
+    
+        return view('staff.recruitment.applicants', compact(
+            'applicants', 
+            'totalApplicants', 
+            'totalInitialInterviews', 
+            'totalInterviews', 
+            'totalOffers', 
+            'totalHires'
+        ));
     }
 
-    // ✅ Show Scan Page for Staff
-    public function showScanPage()
+    // Show details of a single applicant
+    public function showApplication($id)
     {
-        $applications = Application::where('status', 'pending_review')->get();
-        return view('staff.applicants.scan', compact('applications'));
+        $applicant = JobApplication::findOrFail($id);
+
+        $totalApplications = JobApplication::where('current_stage', 'Application')->count();
+        $totalInitialInterviews = JobApplication::where('current_stage', 'Initial Interview')->count();
+        $totalInterviews = JobApplication::where('current_stage', 'Interview')->count();
+        $totalOffers = JobApplication::where('current_stage', 'Offer')->count();
+        $totalHires = JobApplication::where('current_stage', 'Hired')->count();
+
+        return view('staff.recruitment.initial_interviews', compact(
+            'applicant',
+            'totalApplications',
+            'totalInitialInterviews',
+            'totalInterviews',
+            'totalOffers',
+            'totalHires'
+        ));
     }
 
-    // ✅ Staff Updates Applicant Status
+    // View single application
+    public function show($id)
+    {
+        $application = JobApplication::with([
+            'job',
+            'recruitmentProcesses',
+            'preEmploymentDocuments',
+            'offerLetter',
+            'onboardingDocuments'
+        ])->findOrFail($id);
+
+        return view('staff.recruitment.applicants.show', compact('application'));
+    }
+
     public function updateStatus(Request $request, $id)
-{
-    // Validate the incoming request
-    $request->validate([
-        'application_status' => 'required|in:for_admin_review,rejected',
-    ]);
+    {
+        $validStatuses = [
+            JobApplication::STATUS_APPLIED,
+            JobApplication::STATUS_INITIAL_INTERVIEW_SCHEDULED,
+            JobApplication::STATUS_INITIAL_INTERVIEW_COMPLETED,
+            JobApplication::STATUS_INITIAL_INTERVIEW_PASSED,
+            JobApplication::STATUS_INITIAL_INTERVIEW_FAILED,
+            JobApplication::STATUS_DEMO_SCHEDULED,
+            JobApplication::STATUS_DEMO_COMPLETED,
+            JobApplication::STATUS_DEMO_PASSED,
+            JobApplication::STATUS_DEMO_FAILED,
+            JobApplication::STATUS_EXAM_SCHEDULED,
+            JobApplication::STATUS_EXAM_COMPLETED,
+            JobApplication::STATUS_EXAM_PASSED,
+            JobApplication::STATUS_EXAM_FAILED,
+            JobApplication::STATUS_FINAL_INTERVIEW_SCHEDULED,
+            JobApplication::STATUS_FINAL_INTERVIEW_COMPLETED,
+            JobApplication::STATUS_FINAL_INTERVIEW_PASSED,
+            JobApplication::STATUS_FINAL_INTERVIEW_FAILED,
+            JobApplication::STATUS_HIRED,
+            JobApplication::STATUS_REJECTED
+        ];
     
-    $application = Application::findOrFail($id);
-    $application->update([
-        'application_status' => $request->application_status,
-    ]);
-
-    // Redirect back with success message or return JSON response
-    return redirect()->back()->with('status', 'Application status updated successfully.');
-}
-
-
-    // ✅ Admin Reviews Applicants
-    public function viewAdminApplications()
-    {
-        $applications = Application::where('status', 'for_admin_review')->get();
-        return view('admin.applicants.review', compact('applications'));
-    }
-
-    // ✅ Admin Schedules Interview
-    public function scheduleInterview(Request $request, $id)
-    {
+        $validStages = [
+            'application',
+            'initial_interview',
+            'demo',
+            'exam',
+            'final_interview',
+            'pre_employment',
+            'onboarding',
+            'completed'
+        ];
+    
         $request->validate([
-            'interview_date' => 'required|date',
-            'interview_time' => 'required',
-        ]);
-
-        $application = Application::findOrFail($id);
-        $application->update([
-            'status' => 'interview_scheduled',
-            'interview_date' => $request->interview_date,
-            'interview_time' => $request->interview_time,
-        ]);
-
-        // Send Interview Invitation Email
-        Mail::to($application->email)->send(new InterviewInvitation($application));
-
-        return back()->with('success', 'Interview scheduled and invitation sent.');
-    }
-
-    // ✅ Show Interview Page for Staff
-    public function showInterviewPage()
-    {
-        $applications = Application::where('status', 'interview_scheduled')->get();
-        return view('staff.applicants.interview', compact('applications'));
-    }
-
-    // ✅ Staff Marks Interview as Completed
-    public function completeInterview(Request $request, $id)
-    {
-        $application = Application::findOrFail($id);
-        $application->update(['status' => 'interview_completed']);
-
-        return back()->with('success', 'Interview marked as completed.');
-    }
-
-    // ✅ Show Finalize Page for Staff
-    public function showFinalizePage()
-    {
-        $applications = Application::where('status', 'interview_completed')->get();
-        return view('staff.applicants.finalize', compact('applications'));
-    }
-
-    // ✅ Staff Marks Applicant as Hired
-    public function markHired(Request $request, $id)
-    {
-        $application = Application::findOrFail($id);
-        $application->update(['status' => 'hired']);
-
-        return back()->with('success', 'Applicant marked as hired.');
-    }
-
-    // ✅ Show Finalize Hiring Page for Admin
-    public function showFinalizeHiringPage()
-    {
-        $applications = Application::where('status', 'hired')->get();
-        return view('admin.applicants.finalize', compact('applications'));
-    }
-
-    // ✅ Admin Finalizes Hiring
-    public function finalizeHiring(Request $request, $id)
-    {
-        $application = Application::findOrFail($id);
-        $application->update(['status' => 'finalized']);
-
-        return back()->with('success', 'Hiring finalized and applicant added to employees list.');
-    }
-
-    // ✅ Send Interview Invitation Email
-    public function sendInterviewInvitation($id)
-    {
-        $application = Application::findOrFail($id);
-        Mail::to($application->email)->send(new InterviewInvitation($application));
-
-        return back()->with('success', 'Interview invitation email sent successfully.');
-    }
-
-    public function updateApplicationStatus(Request $request)
-    {
-        // Validate request
-        $request->validate([
-            'application_id' => 'required|exists:job_applications,id',
-            'application_status' => 'required|string',
-            'status' => 'nullable|string',
+            'status' => ['required', Rule::in($validStatuses)],
+            'current_stage' => ['required', Rule::in($validStages)],
+            'rejection_reason' => 'nullable|string|max:1000'
         ]);
     
-        // Find the job application
-        $application = JobApplication::findOrFail($request->application_id);
+        $application = JobApplication::findOrFail($id);
+        $application->update($request->only('status', 'current_stage', 'rejection_reason'));
     
-        if (!$application) {
-            return back()->with('error', 'Application not found.');
+        // Handle initial interview scheduling
+        if ($request->current_stage === 'initial_interview' && 
+            $request->status === JobApplication::STATUS_INITIAL_INTERVIEW_SCHEDULED) {
+            
+            RecruitmentProcess::updateOrCreate(
+                [
+                    'application_id' => $application->id,
+                    'stage' => 'initial_interview'
+                ],
+                [
+                    'status' => 'scheduled',
+                    'scheduled_at' => null
+                ]
+            );
+    
+            return redirect()
+                ->route('staff.recruitment.scheduleInitialInterview', $id)
+                ->with('success', 'Please schedule the initial interview');
         }
     
-        // Only update fields if they are provided
-        if ($request->has('application_status')) {
-            $application->application_status = $request->application_status;
+        // For other stages, create/update process records as needed
+        if (in_array($request->current_stage, ['demo', 'exam', 'final_interview'])) {
+            RecruitmentProcess::updateOrCreate(
+                [
+                    'application_id' => $application->id,
+                    'stage' => $request->current_stage
+                ],
+                [
+                    'status' => str_replace('_', ' ', $request->status),
+                    'scheduled_at' => now()
+                ]
+            );
         }
     
-        if ($request->has('status')) {
-            $application->status = $request->status;
-        }
-    
-        $application->save();
-    
-        return back()->with('success', 'Application status updated successfully.');
+        return back()->with('success', 'Application updated successfully');
     }
-    public function showResume($filename)
+
+    // Download resume
+    public function downloadResume($id)
     {
-        $path = storage_path("app/public/resumes/{$filename}");
-    
-        if (file_exists($path)) {
-            return response()->file($path);
+        $application = JobApplication::findOrFail($id);
+        return Storage::download($application->resume_path);
+    }
+
+    // View all applications
+    public function index()
+    {
+        $applications = JobApplication::with('job')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('applications.index', compact('applications'));
+    }
+
+    // Application success page
+    public function success($id)
+    {
+        $application = JobApplication::findOrFail($id);
+        return view('applications.success', compact('application'));
+    }
+
+    // Store resume file with unique name
+    private function storeResume($file, $jobId, $userId)
+    {
+        $fileName = 'resume_' . $jobId . '_' . $userId . '_' . time() . '.' . $file->extension();
+        return $file->storeAs('resumes', $fileName, 'public');
+    }
+
+    public function preEmploymentStatus()
+    {
+        if (!$this->preEmploymentDocument) {
+            return 'not-started';
         }
-    
-        return abort(404);
+        
+        if ($this->status === self::STATUS_PRE_EMPLOYMENT_COMPLETED) {
+            return 'completed';
+        }
+        
+        if ($this->preEmploymentDocument->allVerified()) {
+            return 'documents-completed';
+        }
+        
+        if ($this->preEmploymentDocument->scheduled_date) {
+            return 'in-progress';
+        }
+        
+        return 'pending';
     }
 }
