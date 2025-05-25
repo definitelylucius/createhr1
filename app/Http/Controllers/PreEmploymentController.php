@@ -6,7 +6,7 @@ use App\Models\JobApplication;
 use App\Models\PreEmploymentDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
+
 use App\Mail\DocumentRequestMail;
 use App\Mail\AppointmentScheduledMail;
 use Illuminate\Support\Facades\DB;
