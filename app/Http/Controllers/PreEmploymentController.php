@@ -14,105 +14,104 @@ use Illuminate\Support\Facades\Storage;
 
 class PreEmploymentController extends Controller
 {
-    public function index()
-    {
-        $applications = JobApplication::with(['job', 'preEmploymentDocument', 'user'])
-            ->whereHas('job', fn ($query) => $query->where('status', 'active'))
-            ->where(function($query) {
-                $query->where('status', JobApplication::STATUS_FINAL_INTERVIEW_PASSED)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCUMENTS)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_SUBMITTED)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_VERIFICATION)
-                      ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_COMPLETED);
-            })
-            ->paginate(10);
-    
-        foreach ($applications as $application) {
-            $previousStatus = $application->status;
-    
-            switch ($application->preEmploymentStatus()) {
-                case 'completed':
-                    $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_COMPLETED;
-                    $application->current_stage = 'Pre-employment Complete';
-                    break;
-    
-                case 'documents-completed':
-                    $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_VERIFICATION;
-                    $application->current_stage = 'Documents Verification';
-                    break;
-    
-                case 'pending':
-                    $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED;
-                    $application->current_stage = 'Documents Requested';
-                    break;
-    
-                default:
-                    if ($application->status === JobApplication::STATUS_FINAL_INTERVIEW_PASSED) {
-                        $application->status = JobApplication::STATUS_PRE_EMPLOYMENT;
-                        $application->current_stage = 'Pre-employment Started';
-                    }
-                    break;
-            }
-    
-            if ($application->isDirty()) {
-                try {
-                    $application->save();
-                } catch (\Exception $e) {
-                    Log::error("Failed to update application {$application->id}: " . $e->getMessage());
-                    continue;
+   public function index()
+{
+    $applications = JobApplication::with(['job', 'preEmploymentDocument', 'user'])
+        ->whereHas('job', fn ($query) => $query->where('status', 'active'))
+        ->where(function($query) {
+            $query->where('status', JobApplication::STATUS_FINAL_INTERVIEW_PASSED)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCUMENTS)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_SUBMITTED)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_VERIFICATION)
+                  ->orWhere('status', JobApplication::STATUS_PRE_EMPLOYMENT_COMPLETED);
+        })
+        ->paginate(10);
+
+    foreach ($applications as $application) {
+        $previousStatus = $application->status;
+
+        switch ($application->preEmploymentStatus()) {
+            case 'completed':
+                $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_COMPLETED;
+                $application->current_stage = 'Pre-employment Complete';
+                break;
+
+            case 'documents-completed':
+                $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_VERIFICATION;
+                $application->current_stage = 'Documents Verification';
+                break;
+
+            case 'pending':
+                $application->status = JobApplication::STATUS_PRE_EMPLOYMENT_DOCS_REQUESTED;
+                $application->current_stage = 'Documents Requested';
+                break;
+
+            default:
+                if ($application->status === JobApplication::STATUS_FINAL_INTERVIEW_PASSED) {
+                    $application->status = JobApplication::STATUS_PRE_EMPLOYMENT;
+                    $application->current_stage = 'Pre-employment Started';
                 }
+                break;
+        }
+
+        if ($application->isDirty()) {
+            try {
+                $application->save();
+            } catch (\Exception $e) {
+                continue;
             }
         }
-    
-        // Document-based counting (maintained from original)
-        $completedCount = JobApplication::whereHas('preEmploymentDocument', function ($query) {
-            $query->where([
-                ['nbi_clearance_verified', true],
-                ['police_clearance_verified', true],
-                ['barangay_clearance_verified', true],
-                ['coe_verified', true],
-                ['drivers_license_verified', true],
-                ['reference_check_verified', true],
-                ['drug_test_verified', true],
-                ['medical_exam_verified', true],
-            ])->whereNotNull('drug_test_path')
-              ->whereNotNull('medical_exam_path');
-        })->count();
-    
-        $inProgressCount = JobApplication::whereHas('preEmploymentDocument', function ($query) {
-            $query->where(function ($q) {
-                $q->orWhere('nbi_clearance_verified', true)
-                    ->orWhere('police_clearance_verified', true)
-                    ->orWhere('barangay_clearance_verified', true)
-                    ->orWhere('coe_verified', true)
-                    ->orWhere('drivers_license_verified', true)
-                    ->orWhere('reference_check_verified', true)
-                    ->orWhere('drug_test_verified', true)
-                    ->orWhere('medical_exam_verified', true);
-            })->where(function ($q) {
-                $q->orWhere('nbi_clearance_verified', false)
-                    ->orWhere('police_clearance_verified', false)
-                    ->orWhere('barangay_clearance_verified', false)
-                    ->orWhere('coe_verified', false)
-                    ->orWhere('drivers_license_verified', false)
-                    ->orWhere('reference_check_verified', false)
-                    ->orWhere('drug_test_verified', false)
-                    ->orWhereNull('drug_test_path')
-                    ->orWhere('medical_exam_verified', false)
-                    ->orWhereNull('medical_exam_path');
-            });
-        })->count();
-    
-        $notStartedCount = JobApplication::whereDoesntHave('preEmploymentDocument')
-            ->where('status', JobApplication::STATUS_FINAL_INTERVIEW_PASSED)
-            ->count();
-    
-        return view('staff.recruitment.pre_employment', compact(
-            'applications', 'completedCount', 'inProgressCount', 'notStartedCount'
-        ));
     }
+
+    // Document-based counting (maintained from original)
+    $completedCount = JobApplication::whereHas('preEmploymentDocument', function ($query) {
+        $query->where([
+            ['nbi_clearance_verified', true],
+            ['police_clearance_verified', true],
+            ['barangay_clearance_verified', true],
+            ['coe_verified', true],
+            ['drivers_license_verified', true],
+            ['reference_check_verified', true],
+            ['drug_test_verified', true],
+            ['medical_exam_verified', true],
+        ])->whereNotNull('drug_test_path')
+          ->whereNotNull('medical_exam_path');
+    })->count();
+
+    $inProgressCount = JobApplication::whereHas('preEmploymentDocument', function ($query) {
+        $query->where(function ($q) {
+            $q->orWhere('nbi_clearance_verified', true)
+                ->orWhere('police_clearance_verified', true)
+                ->orWhere('barangay_clearance_verified', true)
+                ->orWhere('coe_verified', true)
+                ->orWhere('drivers_license_verified', true)
+                ->orWhere('reference_check_verified', true)
+                ->orWhere('drug_test_verified', true)
+                ->orWhere('medical_exam_verified', true);
+        })->where(function ($q) {
+            $q->orWhere('nbi_clearance_verified', false)
+                ->orWhere('police_clearance_verified', false)
+                ->orWhere('barangay_clearance_verified', false)
+                ->orWhere('coe_verified', false)
+                ->orWhere('drivers_license_verified', false)
+                ->orWhere('reference_check_verified', false)
+                ->orWhere('drug_test_verified', false)
+                ->orWhereNull('drug_test_path')
+                ->orWhere('medical_exam_verified', false)
+                ->orWhereNull('medical_exam_path');
+        });
+    })->count();
+
+    $notStartedCount = JobApplication::whereDoesntHave('preEmploymentDocument')
+        ->where('status', JobApplication::STATUS_FINAL_INTERVIEW_PASSED)
+        ->count();
+
+    return view('staff.recruitment.pre_employment', compact(
+        'applications', 'completedCount', 'inProgressCount', 'notStartedCount'
+    ));
+}
 
     public function showScheduleForm()
     {
@@ -203,7 +202,7 @@ class PreEmploymentController extends Controller
             return redirect()->back()->with('success', 'Document request sent successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Document request failed for application {$application->id}: " . $e->getMessage());
+         
             return redirect()->back()->with('error', 'Failed to send document request: ' . $e->getMessage());
         }
     }
@@ -243,7 +242,7 @@ public function verifyDocumentStorage(JobApplication $application)
     foreach ($requestedDocs as $docType) {
         $path = $document->{$docType.'_path'};
         if ($path && !Storage::disk('public')->exists($path)) {
-            Log::error("Document file missing for application {$application->id}: {$path}");
+            // Document file missing - log removed as requested
         }
     }
 }
