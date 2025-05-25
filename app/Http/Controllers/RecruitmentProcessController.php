@@ -63,11 +63,7 @@ class RecruitmentProcessController extends Controller
 
 public function initialInterview(Request $request, $applicationId)
 {
-    Log::debug('START - Initial interview scheduling', [
-        'application_id' => $applicationId,
-        'input' => $request->all(),
-        'time' => now()->toDateTimeString()
-    ]);
+   
 
     try {
         // Validation
@@ -142,9 +138,9 @@ public function initialInterview(Request $request, $applicationId)
                 'company_name' => config('app.name')
             ];
 
-            Log::debug('SENDING EMAIL', ['to' => $application->email, 'data' => $mailData]);
+            
             Mail::to($application->email)->send(new InitialInterviewInvitation($application, $mailData));
-            Log::info('EMAIL SENT', ['to' => $application->email]);
+           
         }
 
         DB::commit();
@@ -154,10 +150,7 @@ public function initialInterview(Request $request, $applicationId)
             
     } catch (\Exception $e) {
         DB::rollBack();
-        Log::error('FAILED', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
+       
         return back()->withInput()->with('error', 'Error: '.$e->getMessage());
     }
 }
