@@ -32,7 +32,7 @@ class ApplicationController extends Controller
     // Store new application
     public function store(Request $request, $jobId)
     {
-        Log::info('Starting job application submission', ['job_id' => $jobId, 'user' => auth()->id()]);
+     
 
         $validated = $request->validate([
             'firstname' => 'required|string|max:255',
@@ -43,12 +43,12 @@ class ApplicationController extends Controller
             'address' => 'nullable|string|max:255', // Added address validation
         ]);
 
-        Log::debug('Validation passed', ['validated_data' => $validated]);
+        
 
         try {
-            Log::debug('Attempting to find job', ['job_id' => $jobId]);
+          
             $job = Job::findOrFail($jobId);
-            Log::info('Job found', ['job' => $job->id]);
+         
 
             // Store resume
             try {
@@ -57,10 +57,7 @@ class ApplicationController extends Controller
                 $extension = $request->resume->getClientOriginalExtension();
                 $resumeName = $safeName.'_'.time().'.'.$extension;
                 
-                Log::debug('Attempting to store resume', [
-                    'original_name' => $originalName,
-                    'safe_name' => $resumeName
-                ]);
+              
 
                 $resumePath = $request->file('resume')->storeAs(
                     'resumes', 
@@ -68,12 +65,9 @@ class ApplicationController extends Controller
                     'public'
                 );
                 
-                Log::info('Resume stored successfully', ['path' => $resumePath]);
+             
             } catch (\Exception $e) {
-                Log::error('Resume storage failed', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
+             
                 throw $e;
             }
 
@@ -92,23 +86,18 @@ class ApplicationController extends Controller
 
             if (auth()->check()) {
                 $applicationData['user_id'] = auth()->id();
-                Log::debug('User authenticated', ['user_id' => auth()->id()]);
+             
             }
 
-            Log::debug('Attempting to create application', ['application_data' => $applicationData]);
+           
 
             $application = JobApplication::create($applicationData);
-            Log::info('Application created successfully', ['application_id' => $application->id]);
-
+     
             return redirect()->route('application.success', $application->id)
                 ->with('success', 'Application submitted successfully!');
 
         } catch (\Exception $e) {
-            Log::error('Application submission failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->all()
-            ]);
+           
 
             return back()
                 ->withInput()
