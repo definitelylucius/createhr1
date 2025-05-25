@@ -49,7 +49,7 @@ class ResumeParserController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Resume Parse Error: " . $e->getMessage());
+          
             return back()->withErrors(['error' => 'Failed to parse resume. Please try again.']);
         }
     }
@@ -90,7 +90,7 @@ class ResumeParserController extends Controller
                 ->with('success', 'Applicant data saved successfully!');
 
         } catch (\Exception $e) {
-            Log::error("Applicant Save Error: " . $e->getMessage());
+          
             return back()->withErrors(['error' => 'Failed to save applicant data.']);
         }
     }
