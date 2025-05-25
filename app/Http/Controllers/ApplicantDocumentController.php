@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\JobApplication;
 use App\Models\PreEmploymentDocument;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Storage;
 
 class ApplicantDocumentController extends Controller
