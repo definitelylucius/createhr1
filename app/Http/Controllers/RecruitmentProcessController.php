@@ -12,7 +12,7 @@ use App\Mail\DemoInstructionsEmail;
 use App\Mail\InitialInterviewInvitation;
 use App\Mail\InterviewScheduled;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Carbon;
 use App\Mail\InterviewInvitation;
 use App\Mail\DemoInstructions;
