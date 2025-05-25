@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Job;
 use App\Notifications\SendTwoFactorCode;
@@ -48,17 +47,9 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('two-factor.challenge');
     }
 
-    
     public function showTwoFactorForm(Request $request)
     {
-        Log::debug('Showing 2FA form', [
-            'has_user_id' => $request->session()->has('2fa_user_id'),
-            'has_login_attempt' => $request->session()->has('2fa_login_attempt'),
-            'session_data' => $request->session()->all()
-        ]);
-    
         if (!$request->session()->has('2fa_user_id')) {
-            Log::warning('Unauthorized 2FA access attempt');
             return redirect()->route('login')->withErrors(['error' => 'Please login first']);
         }
     
@@ -90,6 +81,7 @@ class AuthenticatedSessionController extends Controller
     
         return $this->redirectToDashboard($user);
     }
+
     // Redirect based on user role
     protected function redirectToDashboard($user)
     {
@@ -118,13 +110,11 @@ class AuthenticatedSessionController extends Controller
     }
 
     public function enableTwoFactor(User $user)
-{
-    $user->forceFill([
-        'two_factor_secret' => encrypt(app(Google2FA::class)->generateSecretKey()),
-    ])->save();
-    
-    return back()->with('status', 'Two-factor authentication enabled');
-}
-
-    
+    {
+        $user->forceFill([
+            'two_factor_secret' => encrypt(app(Google2FA::class)->generateSecretKey()),
+        ])->save();
+        
+        return back()->with('status', 'Two-factor authentication enabled');
+    }
 }
